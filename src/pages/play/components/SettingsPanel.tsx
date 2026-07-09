@@ -7,11 +7,13 @@ import { getDefaultSongSettings } from '@/features/SongVisualization/utils'
 import { InstrumentName } from '@/features/synth'
 import { getKeySignatures, KEY_SIGNATURE, NOTE_LABELS } from '@/features/theory'
 import { useOnUnmount } from '@/hooks'
+import { loopbackEnabledAtom } from '@/features/midi'
 import { Metronome as MetronomeIcon } from '@/icons'
 import { Song, SongConfig, VisualizationMode } from '@/types'
 import clsx from 'clsx'
-import { getDefaultStore, useAtomValue } from 'jotai'
+import { getDefaultStore, useAtom, useAtomValue } from 'jotai'
 import {
+  ArrowLeftRight,
   AudioWaveform,
   ChevronDown,
   Gauge,
@@ -69,6 +71,7 @@ export default function SettingsPanel(props: SidebarProps) {
   const metronomeVolume = metronomeConfig.volume
   const metronomeSpeed = metronomeConfig.speed
   const emphasizeFirst = metronomeConfig.emphasizeFirst
+  const [loopbackEnabled, setLoopbackEnabled] = useAtom(loopbackEnabledAtom)
 
   useOnUnmount(() => miniPlayer.stop())
 
@@ -289,6 +292,14 @@ export default function SettingsPanel(props: SidebarProps) {
             subtitle="Pause until correct note"
           >
             <SidebarSwitch isSelected={waiting} onChange={handleWaiting} />
+          </SettingRow>
+
+          <SettingRow
+            icon={<ArrowLeftRight className="h-4 w-4" />}
+            title="MIDI Loopback"
+            subtitle="Send notes to output devices"
+          >
+            <SidebarSwitch isSelected={loopbackEnabled} onChange={setLoopbackEnabled} />
           </SettingRow>
 
           <div className="space-y-4">

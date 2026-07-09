@@ -1,10 +1,10 @@
 export const HAND_COLORS = {
   right: {
-    black: '#5b3ad6',
-    white: '#7b5ff0',
+    black: '#15803d',
+    white: '#22c55e',
   },
   left: {
-    black: '#d1642e',
-    white: '#f08a5b',
+    black: '#1d4ed8',
+    white: '#3b82f6',
   },
 } as const

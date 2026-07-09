@@ -42,6 +42,11 @@ const enabledOutputDevices: Map<string, MIDIOutput> = new Map()
 export const enabledInputIdsAtom = atom<Set<string>>(new Set<string>())
 export const enabledOutputIdsAtom = atom<Set<string>>(new Set<string>())
 
+// When false (default), MIDI output is NOT sent to external devices.
+// Prevents echo/loopback: piano key → MIDI in → app → MIDI out → piano → MIDI in → ...
+// Set to true only if you want an external synth to receive note data.
+export const loopbackEnabledAtom = atom<boolean>(false)
+
 function setEnabledIds(
   atomRef: typeof enabledInputIdsAtom | typeof enabledOutputIdsAtom,
   id: string,
@@ -244,6 +249,9 @@ class MidiState {
     this.notify({ note, velocity, type: 'down', time })
   }
   pressOutput(note: number, volume: number) {
+    if (!store.get(loopbackEnabledAtom)) {
+      return
+    }
     for (const output of enabledOutputDevices) {
       const midiNoteOnCh1 = 144
       const velocity = volume * 127
@@ -258,6 +266,9 @@ class MidiState {
   }
 
   releaseOutput(note: number) {
+    if (!store.get(loopbackEnabledAtom)) {
+      return
+    }
     const midiNoteOffCh1 = 128
     for (const output of enabledOutputDevices) {
       var data = [midiNoteOffCh1, note, 127]

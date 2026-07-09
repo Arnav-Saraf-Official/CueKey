@@ -11,9 +11,69 @@ function increment(x: number) {
   return x + 1
 }
 
+/** Assign finger numbers (1-5) for N simultaneous notes, low→high.
+ *  Uses standard piano chord fingering based on intervals between notes.
+ *  Triads: root pos=1-3-5, 1st inv=1-2-5, 2nd inv=1-3-5.
+ *  Skips fingers proportionally to pitch gaps. */
+function assignFingers(midiNotes: number[]): number[] {
+  const n = midiNotes.length
+  if (n <= 0) return []
+  if (n === 1) return [1]
+
+  // Sort low→high (should already be sorted)
+  const sorted = [...midiNotes].sort((a, b) => a - b)
+
+  // Compute adjacent intervals in semitones
+  const intervals: number[] = []
+  for (let i = 0; i < n - 1; i++) {
+    intervals.push(sorted[i + 1] - sorted[i])
+  }
+  const totalSpan = sorted[n - 1] - sorted[0]
+
+  if (n === 2) {
+    // 2 notes: 1-2 for small interval, 1-3 for 3rd, 1-4 for 4th, 1-5 for 5th+
+    const gap = intervals[0]
+    if (gap <= 2) return [1, 2]
+    if (gap <= 4) return [1, 3]
+    if (gap <= 5) return [1, 4]
+    return [1, 5]
+  }
+
+  if (n === 3) {
+    // Triad detection: check if it's a root, 1st inv, or 2nd inv pattern
+    const [i1, i2] = intervals
+    // Root position: bottom 3rd (3-4 semitones), top 3rd (3-4) → 1-3-5
+    if (i1 >= 3 && i1 <= 4 && i2 >= 3 && i2 <= 4) return [1, 3, 5]
+    // 1st inversion: bottom 4th (5 semitones), top 3rd → 1-2-5
+    if (i1 >= 5 && i1 <= 6 && i2 >= 3 && i2 <= 4) return [1, 2, 5]
+    // 2nd inversion: bottom 3rd, top 4th → 1-3-5
+    if (i1 >= 3 && i1 <= 4 && i2 >= 5 && i2 <= 6) return [1, 3, 5]
+    // Wide spread: 1-2-5 for large total span
+    if (totalSpan > 7) return [1, 2, 5]
+    // Close cluster: 1-2-3
+    if (totalSpan <= 4) return [1, 2, 3]
+    // Default triad
+    return [1, 3, 5]
+  }
+
+  if (n === 4) {
+    // 4-note chords: 1-2-3-5 (dominant 7th style) or 1-2-3-4 (cluster)
+    if (totalSpan >= 7) return [1, 2, 3, 5]
+    if (totalSpan <= 5) return [1, 2, 3, 4]
+    return [1, 2, 4, 5]
+  }
+
+  // 5+ notes: fill the hand
+  if (n === 5) return [1, 2, 3, 4, 5]
+  // More than 5: cap at 5, double some fingers (chord spanning both hands is rare)
+  return Array.from({ length: n }, (_, i) => Math.min(i + 1, 5))
+}
+
 type JotaiStore = ReturnType<typeof getDefaultStore>
 const GOOD_RANGE = 300
 const PERFECT_RANGE = 50
+/** Notes within this time window (seconds) are treated as simultaneous chord. */
+const CHORD_WINDOW = 0.05
 const DEFAULT_BPM = 120
 const DEFAULT_TIME_SIGNATURE = { numerator: 4, denominator: 4 }
 
@@ -208,7 +268,8 @@ export class Player {
     const upcomingNotes: SongNote[] = []
     for (
       let i = this.currentIndex;
-      i < song.notes.length && song.notes[i].time === firstUpcomingNote.time;
+      i < song.notes.length &&
+      song.notes[i].time < firstUpcomingNote.time + CHORD_WINDOW;
       i++
     ) {
       upcomingNotes.push(song.notes[i])
@@ -287,6 +348,155 @@ export class Player {
       (this.hand === 'left' && note.track === left) ||
       (this.hand === 'right' && note.track === right)
     )
+  }
+
+  /** Determine which hand a note belongs to based on track assignment.
+   *  Falls back to algorithmic split when MIDI has only one track
+   *  (both hands assigned to same track by parserInferHands). */
+  getHandForNote(note: SongNote): 'left' | 'right' {
+    const isSingleTrack = this.songHands.left === this.songHands.right
+
+    if (!isSingleTrack) {
+      if (note.track === this.songHands.left) return 'left'
+      if (note.track === this.songHands.right) return 'right'
+      return note.midiNote < 60 ? 'left' : 'right'
+    }
+
+    // Single-track MIDI: algorithmic hand split
+    return this.splitHandByAlgorithm(note)
+  }
+
+  /** Algorithmic hand split for single-track MIDI.
+   *  Groups simultaneous notes and splits at the largest pitch gap or at C4. */
+  private splitHandByAlgorithm(note: SongNote): 'left' | 'right' {
+    const song = this.getSong()
+    if (!song) return note.midiNote < 60 ? 'left' : 'right'
+
+    // Find all notes at the same time (simultaneous notes / chord)
+    const simultaneous = song.notes.filter(
+      (n) => Math.abs(n.time - note.time) < 0.005,
+    )
+
+    if (simultaneous.length <= 1) {
+      // Single note: use C4 boundary with hysteresis
+      return note.midiNote < 60 ? 'left' : 'right'
+    }
+
+    // Multiple notes at same time: split by largest pitch gap or C4
+    const sorted = simultaneous.map((n) => n.midiNote).sort((a, b) => a - b)
+
+    // Find the largest gap between adjacent notes
+    let maxGap = 0
+    let splitAt = 60 // default to C4
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const gap = sorted[i + 1] - sorted[i]
+      if (gap > maxGap) {
+        maxGap = gap
+        splitAt = sorted[i] + Math.floor(gap / 2)
+      }
+    }
+
+    // Only use the gap split if it's significant (> 4 semitones)
+    // Otherwise fall back to C4
+    const threshold = maxGap > 4 ? splitAt : 60
+    return note.midiNote < threshold ? 'left' : 'right'
+  }
+
+  /** Return hit notes whose MIDI key is still physically pressed.
+   *  midiNote returned is the transposed value (matching what the user pressed). */
+  getHeldHitNotes(): Array<{ midiNote: number; hand: 'left' | 'right' }> {
+    const result: Array<{ midiNote: number; hand: 'left' | 'right' }> = []
+    for (const note of this.hitNotes) {
+      const transposed = this.getTransposedMidi(note.midiNote)
+      if (this.midiPressedNotes.has(transposed)) {
+        result.push({ midiNote: transposed, hand: this.getHandForNote(note) })
+      }
+    }
+    return result
+  }
+
+  /** Return notes currently waiting to be played, with hand and finger assignment.
+   *  Used for wait-mode fingering display on piano keys.
+   *  Includes both:
+   *  1. Notes at playhead blocking wait mode (wait=true, currentIndex not advanced)
+   *  2. Notes in lateNotes that have passed the play line (non-wait mode) */
+  getWaitingNotes(): Array<{
+    midiNote: number
+    hand: 'left' | 'right'
+    finger: number
+    fingerLabel: string
+  }> {
+    const byHand = new Map<'left' | 'right', Array<{ midiNote: number; songNote: SongNote }>>()
+
+    const song = this.getSong()
+
+    // 1. Notes blocking wait mode at the playhead (currentIndex)
+    //    These are the upcoming notes at the current song time.
+    //    In wait mode, playLoop_ returns early so they never enter lateNotes.
+    if (song && this.wait && this.currentIndex < song.notes.length) {
+      const firstUpcoming = song.notes[this.currentIndex]
+      if (firstUpcoming && !this.hitNotes.has(firstUpcoming)) {
+        // Gather all notes at the same time (simultaneous notes)
+        const notesAtTime: SongNote[] = []
+        for (
+          let i = this.currentIndex;
+          i < song.notes.length &&
+          song.notes[i].time < firstUpcoming.time + CHORD_WINDOW;
+          i++
+        ) {
+          const n = song.notes[i]
+          if (this.isActiveHand(n) && !this.hitNotes.has(n)) {
+            notesAtTime.push(n)
+          }
+        }
+        for (const n of notesAtTime) {
+          const hand = this.getHandForNote(n)
+          if (!byHand.has(hand)) {
+            byHand.set(hand, [])
+          }
+          byHand.get(hand)!.push({
+            midiNote: this.getTransposedMidi(n.midiNote),
+            songNote: n,
+          })
+        }
+      }
+    }
+
+    // 2. Late notes that have already passed the play line
+    for (const [midiNote, songNote] of this.lateNotes.entries()) {
+      const hand = this.getHandForNote(songNote)
+      if (!byHand.has(hand)) {
+        byHand.set(hand, [])
+      }
+      byHand.get(hand)!.push({ midiNote, songNote })
+    }
+
+    // Assign fingers per hand: sort by pitch, number 1-5 from low→high
+    const result: Array<{
+      midiNote: number
+      hand: 'left' | 'right'
+      finger: number
+      fingerLabel: string
+    }> = []
+
+    for (const [hand, notes] of byHand.entries()) {
+      // Sort by pitch (low→high), finger 1 on lowest note
+      notes.sort((a, b) => a.midiNote - b.midiNote)
+
+      const fingers = assignFingers(notes.map((n) => n.midiNote))
+      const prefix = hand === 'right' ? 'R' : 'L'
+
+      for (let i = 0; i < notes.length; i++) {
+        result.push({
+          midiNote: notes[i].midiNote,
+          hand,
+          finger: fingers[i],
+          fingerLabel: `${prefix}${fingers[i]}`,
+        })
+      }
+    }
+
+    return result
   }
 
   getTime() {
@@ -536,6 +746,43 @@ export class Player {
 
       if (this.isActiveHand(note)) {
         if (this.wait && !this.hitNotes.has(note)) {
+          // Wait mode: gather all notes within chord window
+          const chordNotes: SongNote[] = []
+          for (
+            let i = this.currentIndex;
+            i < song.notes.length &&
+            song.notes[i].time < note.time + CHORD_WINDOW;
+            i++
+          ) {
+            const n = song.notes[i]
+            if (this.isActiveHand(n)) {
+              chordNotes.push(n)
+            }
+          }
+
+          // Check if ALL chord notes are hit
+          const allHit = chordNotes.every((n) => this.hitNotes.has(n))
+
+          if (allHit) {
+            // All notes in chord hit — advance past them
+            for (const n of chordNotes) {
+              if (!this.hitNotes.has(n)) continue
+              this.playing.push(n)
+              if (
+                !this.skipMissedNotes ||
+                !this.isActiveHand(n) ||
+                isHitNote(this, n)
+              ) {
+                this.playNote(n)
+              }
+              this.currentIndex++
+            }
+            // Update time past the chord
+            this.currentSongTime = chordNotes[chordNotes.length - 1].time + 0.001
+            continue
+          }
+
+          // Some notes still waiting — freeze at first note's time
           this.currentSongTime = note.time
           return
         } else if (!this.hitNotes.has(note) && prevTime < note.time) {

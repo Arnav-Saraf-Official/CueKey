@@ -79,6 +79,7 @@ export async function drawPianoRoll(
   measurements: PianoRollMeasurements,
   pianoTopY: number,
   activeNotes: Map<number, Color>,
+  fingerLabels?: Map<number, string>,
 ) {
   const { whiteHeight, whiteNoteSeparation, blackHeight, lanes } = measurements
   ctx.save()
@@ -165,6 +166,44 @@ export async function drawPianoRoll(
       ctx.globalAlpha = 1
     }
   }
+
+  // Render fingering labels on top of keys
+  if (fingerLabels && fingerLabels.size > 0) {
+    for (let [midiNote, label] of fingerLabels.entries()) {
+      const lane = lanes[+midiNote]
+      if (!lane) continue
+      const { left, width } = lane
+      const isBlackKey = isBlack(+midiNote)
+      const centerX = left + width / 2
+      const keyHeight = isBlackKey ? blackHeight : whiteHeight
+      const fontSize = Math.max(8, Math.min(width * 0.55, 14))
+      const radius = Math.max(fontSize * 0.7, width * 0.28)
+
+      // Position label in the visible upper portion of the key
+      const labelY = isBlackKey
+        ? pianoTopY + keyHeight * 0.45
+        : pianoTopY + keyHeight * 0.3
+
+      // White circle background
+      ctx.fillStyle = 'white'
+      ctx.beginPath()
+      ctx.arc(centerX, labelY, radius, 0, Math.PI * 2)
+      ctx.fill()
+
+      // Orange border
+      ctx.strokeStyle = '#f97316'
+      ctx.lineWidth = 1.5
+      ctx.stroke()
+
+      // Bold label text
+      ctx.fillStyle = '#f97316'
+      ctx.font = `bold ${fontSize}px monospace`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(label, centerX, labelY)
+    }
+  }
+
   ctx.restore()
 }
 

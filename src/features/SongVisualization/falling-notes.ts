@@ -33,9 +33,24 @@ const colors = {
  */
 function getActiveNotes(state: State, inViewNotes: SongNote[]): Map<number, string> {
   const activeNotes = new Map<number, string>()
+
+  // MIDI-pressed keys → grey (lowest priority)
   for (let midiNote of midiState.getPressedNotes().keys()) {
     activeNotes.set(midiNote, 'grey')
   }
+
+  // Waiting notes (wait mode) → orange (overrides grey for those keys)
+  for (let w of state.player.getWaitingNotes()) {
+    activeNotes.set(w.midiNote, '#f97316')
+  }
+
+  // Held hit notes → blue (LH) or green (RH) (overrides orange)
+  for (let h of state.player.getHeldHitNotes()) {
+    const color = h.hand === 'left' ? '#3b82f6' : '#22c55e'
+    activeNotes.set(h.midiNote, color)
+  }
+
+  // Playing song notes → hand color (highest priority for active notes)
   for (let note of inViewNotes) {
     if (isPlayingNote(state, note)) {
       const transposed = getTransposedMidi(state, note)
@@ -43,6 +58,15 @@ function getActiveNotes(state: State, inViewNotes: SongNote[]): Map<number, stri
     }
   }
   return activeNotes
+}
+
+/** Build a map of midiNote → finger label for waiting notes. */
+function getFingerLabels(state: State): Map<number, string> {
+  const labels = new Map<number, string>()
+  for (let w of state.player.getWaitingNotes()) {
+    labels.set(w.midiNote, w.fingerLabel)
+  }
+  return labels
 }
 
 function isPlayingNote(state: State, note: SongNote) {
@@ -157,6 +181,7 @@ export function renderFallingVis(givenState: GivenState): void {
     state.pianoMeasurements,
     state.pianoTopY,
     getActiveNotes(state, items.filter((i) => i.type === 'note') as any),
+    getFingerLabels(state),
   )
 }
 

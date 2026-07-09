@@ -21,3 +21,6 @@ tsconfig.tsbuildinfo
 
 # vercel cli files
 .vercel
+
+CLAUDE.md
+PLAN.md
