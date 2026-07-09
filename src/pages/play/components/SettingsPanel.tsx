@@ -1,4 +1,4 @@
-import { Select, Tooltip } from '@/components'
+import { Select, Slider, Tooltip } from '@/components'
 import { SelectItem } from '@/components/Select'
 import { PickInstrument } from '@/features/controls'
 import { Player, usePlayer } from '@/features/player'
@@ -32,9 +32,9 @@ import {
   VolumeX,
   X,
 } from 'lucide-react'
-import { PropsWithChildren, useMemo, useState } from 'react'
+import { PropsWithChildren, useCallback, useEffect, useMemo, useState } from 'react'
 import { Switch as AriaSwitch, TooltipTrigger } from 'react-aria-components'
-import { getSpeedPresetOptions, SPEED_PRESETS } from './speedPresets'
+import { SPEED_PRESETS } from './speedPresets'
 
 type SidebarProps = {
   onChange: (settings: SongConfig) => void
@@ -75,8 +75,34 @@ export default function SettingsPanel(props: SidebarProps) {
 
   useOnUnmount(() => miniPlayer.stop())
 
-  const presetValue =
-    SPEED_PRESETS.find((value) => Math.abs(bpmModifier - value) < 0.001) ?? bpmModifier
+  // Track shift key for speed-slider snap-to-preset
+  const [shiftHeld, setShiftHeld] = useState(false)
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => { if (e.key === 'Shift') setShiftHeld(true) }
+    const up = (e: KeyboardEvent) => { if (e.key === 'Shift') setShiftHeld(false) }
+    window.addEventListener('keydown', down)
+    window.addEventListener('keyup', up)
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
+  }, [])
+
+  const handleSpeedChange = useCallback(
+    (val: number) => {
+      if (shiftHeld) {
+        // Snap to nearest preset
+        let best = SPEED_PRESETS[0]
+        let bestDist = Math.abs(val - best)
+        for (const p of SPEED_PRESETS) {
+          const d = Math.abs(val - p)
+          if (d < bestDist) { bestDist = d; best = p }
+        }
+        player.setBpmModifier(best)
+      } else {
+        player.setBpmModifier(Math.round(val * 100) / 100)
+      }
+    },
+    [player, shiftHeld],
+  )
+
   const metronomePresetValue =
     METRONOME_PRESETS.find((value) => Math.abs(metronomeSpeed - value) < 0.001) ?? 'custom'
   const trackCount = useMemo(() => {
@@ -91,10 +117,6 @@ export default function SettingsPanel(props: SidebarProps) {
       .sort((a, b) => a.id - b.id)
   }, [props.config.tracks])
   const handsMode = left && right ? 'both' : left ? 'left' : 'right'
-  const speedPresetItems = getSpeedPresetOptions(bpmModifier).map((option) => ({
-    id: option.id,
-    name: option.label,
-  }))
   const metronomePresetItems = [
     ...METRONOME_PRESETS.map((value) => ({
       id: value.toString(),
@@ -260,21 +282,21 @@ export default function SettingsPanel(props: SidebarProps) {
           <SettingRow
             icon={<Gauge className="h-4 w-4" />}
             title="Speed"
-            subtitle={`BPM ${Math.round(bpm)}`}
+            subtitle={`${Math.round(bpmModifier * 100)}%` + (shiftHeld ? ' · snap' : '')}
           >
-            <div className="flex items-center gap-2">
-              <Select
-                aria-label="Speed preset"
-                className="w-16"
-                size="sm"
-                selectedKey={presetValue.toString()}
-                onSelectionChange={(key) => {
-                  player.setBpmModifier(Number(key))
-                }}
-                items={speedPresetItems}
-              >
-                {(item) => <SelectItem>{item.name}</SelectItem>}
-              </Select>
+            <div className="flex w-32 items-center gap-2">
+              <span className="text-[10px] font-mono text-gray-500">25%</span>
+              <Slider
+                orientation="horizontal"
+                aria-label="Speed"
+                min={0.25}
+                max={2}
+                step={0.01}
+                value={[bpmModifier]}
+                onValueChange={([v]) => handleSpeedChange(v)}
+                className="h-2 flex-1"
+              />
+              <span className="text-[10px] font-mono text-gray-500">200%</span>
             </div>
           </SettingRow>
 

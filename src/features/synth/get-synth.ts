@@ -1,6 +1,4 @@
 import { isBrowser } from '@/utils'
-import { getDefaultStore } from 'jotai'
-import midi, { loopbackEnabledAtom } from '../midi'
 import gmInstruments from './instruments'
 import { loadInstrument, soundfonts } from './loadInstrument'
 import { InstrumentName, SoundFont, Synth } from './types'
@@ -101,9 +99,8 @@ class InstrumentSynth implements Synth {
   }
 
   playNote(note: number, velocity = 127 / 2) {
-    if (!this.metronome && getDefaultStore().get(loopbackEnabledAtom)) {
-      midi.pressOutput(note, this.masterVolume)
-    }
+    // MIDI output for song playback is handled by Player.playNote() —
+    // this synth only produces Web Audio, never MIDI output.
     if (!this.metronome && !isAudioContextEnabled()) {
       return
     }
@@ -123,9 +120,8 @@ class InstrumentSynth implements Synth {
   }
 
   stopNote(note: number) {
-    if (!this.metronome && getDefaultStore().get(loopbackEnabledAtom)) {
-      midi.releaseOutput(note)
-    }
+    // MIDI output for song playback is handled by Player.stopNotes() —
+    // this synth only produces Web Audio, never MIDI output.
     if (!this.playing.has(note)) {
       return
     }

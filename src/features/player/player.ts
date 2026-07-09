@@ -4,34 +4,269 @@ import { transposeMidi } from '@/features/theory'
 import { MidiStateEvent, Song, SongConfig, SongMeasure, SongNote } from '@/types'
 import { clamp, getHands, round } from '@/utils'
 import { atom, Atom, getDefaultStore, PrimitiveAtom } from 'jotai'
-import midi from '../midi'
+import midi, { loopbackEnabledAtom } from '../midi'
 import { getSynth, Synth } from '../synth'
 
 function increment(x: number) {
   return x + 1
 }
 
-/** Assign finger numbers (1-5) for N simultaneous notes, low→high.
- *  Uses standard piano chord fingering based on intervals between notes.
- *  Triads: root pos=1-3-5, 1st inv=1-2-5, 2nd inv=1-3-5.
- *  Skips fingers proportionally to pitch gaps. */
-function assignFingers(midiNotes: number[]): number[] {
-  const n = midiNotes.length
+/** Find the index of a note in song.notes by matching time + midiNote + track. */
+function findNoteIndex(song: Song, target: SongNote): number {
+  // Binary search by time, then linear scan for exact match
+  const notes = song.notes
+  let lo = 0
+  let hi = notes.length - 1
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1
+    const n = notes[mid]
+    if (n.time < target.time) {
+      lo = mid + 1
+    } else if (n.time > target.time) {
+      hi = mid - 1
+    } else {
+      // Found time match — scan left for earliest, then right for exact
+      let start = mid
+      while (start > 0 && notes[start - 1].time === target.time) start--
+      for (let i = start; i < notes.length && notes[i].time === target.time; i++) {
+        if (
+          notes[i].midiNote === target.midiNote &&
+          notes[i].track === target.track
+        ) {
+          return i
+        }
+      }
+      // Fell through — try the other side of mid
+      lo = mid + 1
+    }
+  }
+  return -1
+}
+
+// ---- Pre-computed hand & fingering maps (built at song load time) ----
+
+/** Hand assignment for every note index in the song. */
+type HandMap = Map<number, 'left' | 'right'>
+/** Finger assignment (1-5) for every note index in the song. */
+type FingerMap = Map<number, number>
+
+/**
+ * Pre-compute hand and finger assignments for all notes in a song.
+ * Called once at song load time so per-frame lookups are O(1).
+ */
+function computeHandAndFingerMaps(
+  song: Song,
+  songHands: { left?: number; right?: number },
+): { handMap: HandMap; fingerMap: FingerMap } {
+  const handMap: HandMap = new Map()
+  const fingerMap: FingerMap = new Map()
+
+  const isSingleTrack = songHands.left === songHands.right
+  const notes = song.notes
+
+  // ---- Pass 1: group notes into time slices (chords) ----
+  interface Slice {
+    indices: number[]       // indices into song.notes
+    midiNotes: number[]     // corresponding MIDI pitches (sorted low→high)
+    time: number
+  }
+  const slices: Slice[] = []
+  let i = 0
+  while (i < notes.length) {
+    const startTime = notes[i].time
+    const slice: Slice = { indices: [], midiNotes: [], time: startTime }
+    while (i < notes.length && notes[i].time < startTime + CHORD_WINDOW) {
+      slice.indices.push(i)
+      slice.midiNotes.push(notes[i].midiNote)
+      i++
+    }
+    // Sort midiNotes low→high while keeping index alignment
+    const paired = slice.indices.map((idx, j) => ({ idx, midi: slice.midiNotes[j] }))
+    paired.sort((a, b) => a.midi - b.midi)
+    slice.indices = paired.map((p) => p.idx)
+    slice.midiNotes = paired.map((p) => p.midi)
+    slices.push(slice)
+  }
+
+  // ---- Pass 2: assign hands per slice ----
+  const sliceHands: Array<'left' | 'right' | 'split'> = []
+
+  for (const slice of slices) {
+    if (!isSingleTrack) {
+      // Multi-track: use track-based assignment
+      const firstIdx = slice.indices[0]
+      const track = notes[firstIdx].track
+      if (track === songHands.left) {
+        sliceHands.push('left')
+      } else if (track === songHands.right) {
+        sliceHands.push('right')
+      } else {
+        // Unknown track — use pitch heuristic, but only one hand per slice
+        const avgPitch = slice.midiNotes.reduce((a, b) => a + b, 0) / slice.midiNotes.length
+        sliceHands.push(avgPitch < 60 ? 'left' : 'right')
+      }
+      continue
+    }
+
+    // Single-track: algorithmic split
+    if (slice.indices.length === 1) {
+      // Single note — defer to continuity pass
+      sliceHands.push('left') // placeholder, fixed in pass 3
+      continue
+    }
+
+    // Multiple notes: split at largest pitch gap
+    const gaps: Array<{ gap: number; splitAt: number }> = []
+    for (let j = 0; j < slice.midiNotes.length - 1; j++) {
+      const gap = slice.midiNotes[j + 1] - slice.midiNotes[j]
+      gaps.push({ gap, splitAt: slice.midiNotes[j] + Math.floor(gap / 2) })
+    }
+    const maxGap = gaps.reduce((best, g) => (g.gap > best.gap ? g : best), gaps[0])
+
+    if (maxGap.gap > 4) {
+      // Significant gap: split the slice
+      sliceHands.push('split')
+      // Store the split point on the slice for later use
+      ;(slice as any)._splitAt = maxGap.splitAt
+    } else {
+      // Cluster — assign entire slice to one hand based on average pitch
+      const avgPitch = slice.midiNotes.reduce((a, b) => a + b, 0) / slice.midiNotes.length
+      sliceHands.push(avgPitch < 60 ? 'left' : 'right')
+    }
+  }
+
+  // ---- Pass 3: continuity pass for single-note slices ----
+  // A single-note slice between two same-hand slices inherits that hand
+  for (let s = 0; s < slices.length; s++) {
+    if (sliceHands[s] !== 'left' || slices[s].indices.length > 1) continue
+    // This is a placeholder single-note slice
+
+    // Look backward and forward for context
+    let prevHand: 'left' | 'right' | null = null
+    let nextHand: 'left' | 'right' | null = null
+
+    for (let p = s - 1; p >= 0 && prevHand === null; p--) {
+      if (sliceHands[p] === 'left' || sliceHands[p] === 'right') prevHand = sliceHands[p] as 'left' | 'right'
+      else if (sliceHands[p] === 'split') prevHand = null // ambiguous
+    }
+    for (let n = s + 1; n < slices.length && nextHand === null; n++) {
+      if (sliceHands[n] === 'left' || sliceHands[n] === 'right') nextHand = sliceHands[n] as 'left' | 'right'
+      else if (sliceHands[n] === 'split') nextHand = null
+    }
+
+    const pitch = slices[s].midiNotes[0]
+    if (prevHand && nextHand && prevHand === nextHand) {
+      // Both neighbors agree — use that hand
+      sliceHands[s] = prevHand
+    } else if (prevHand) {
+      // Only backward context
+      sliceHands[s] = prevHand
+    } else if (nextHand) {
+      // Only forward context
+      sliceHands[s] = nextHand
+    } else {
+      // No context — fall back to C4
+      sliceHands[s] = pitch < 60 ? 'left' : 'right'
+    }
+  }
+
+  // ---- Pass 4: build handMap from slices ----
+  for (let s = 0; s < slices.length; s++) {
+    const slice = slices[s]
+    const hand = sliceHands[s]
+
+    if (hand === 'split') {
+      const splitAt = (slice as any)._splitAt ?? 60
+      for (let j = 0; j < slice.indices.length; j++) {
+        handMap.set(slice.indices[j], slice.midiNotes[j] < splitAt ? 'left' : 'right')
+      }
+    } else {
+      for (const idx of slice.indices) {
+        handMap.set(idx, hand)
+      }
+    }
+  }
+
+  // ---- Pass 5: compute fingerMap ----
+  // For each slice, assign fingers per hand
+  for (let s = 0; s < slices.length; s++) {
+    const slice = slices[s]
+
+    // Group notes in this slice by hand
+    const byHand = new Map<'left' | 'right', Array<{ idx: number; midi: number }>>()
+    for (let j = 0; j < slice.indices.length; j++) {
+      const idx = slice.indices[j]
+      const hand = handMap.get(idx)!
+      if (!byHand.has(hand)) byHand.set(hand, [])
+      byHand.get(hand)!.push({ idx, midi: slice.midiNotes[j] })
+    }
+
+    for (const [, group] of byHand) {
+      // Sort by pitch (low→high) — should already be sorted from Pass 1
+      group.sort((a, b) => a.midi - b.midi)
+      const midis = group.map((g) => g.midi)
+
+      if (group.length === 1) {
+        // Single note: pick a sensible finger based on its position
+        // within the hand's typical range
+        const midi = midis[0]
+        const hand = handMap.get(group[0].idx)!
+        const finger = defaultFingerForPitch(midi, hand)
+        fingerMap.set(group[0].idx, finger)
+      } else {
+        // Chord: use interval-based fingering
+        const fingers = chordFingers(midis)
+        for (let j = 0; j < group.length; j++) {
+          fingerMap.set(group[j].idx, fingers[j])
+        }
+      }
+    }
+  }
+
+  return { handMap, fingerMap }
+}
+
+/**
+ * Default finger for a single isolated note in a hand.
+ * Thumb (1) for extreme low notes in that hand's range,
+ * pinky (5) for extreme high notes, middle (3) for mid-range.
+ */
+function defaultFingerForPitch(midiNote: number, hand: 'left' | 'right'): number {
+  // Typical piano ranges per hand
+  // RH: C4(60) to C7(96), comfort zone D4(62) to G5(79)
+  // LH: C2(36) to C5(72), comfort zone E2(40) to G4(67)
+  if (hand === 'right') {
+    if (midiNote <= 60) return 1   // C4 and below → thumb
+    if (midiNote <= 65) return 2   // C4-F4 → index
+    if (midiNote <= 72) return 3   // F#4-C5 → middle
+    if (midiNote <= 79) return 4   // C#5-G5 → ring
+    return 5                        // above G5 → pinky
+  } else {
+    if (midiNote <= 36) return 5   // C2 and below → pinky (LH is reversed)
+    if (midiNote <= 43) return 4   // C#2-G2 → ring
+    if (midiNote <= 55) return 3   // G#2-G3 → middle
+    if (midiNote <= 62) return 2   // G#3-D4 → index
+    return 1                        // above D4 → thumb
+  }
+}
+
+/**
+ * Assign finger numbers for a chord (simultaneous notes in same hand),
+ * sorted low→high. Uses standard piano chord fingering based on intervals.
+ */
+function chordFingers(sortedMidis: number[]): number[] {
+  const n = sortedMidis.length
   if (n <= 0) return []
-  if (n === 1) return [1]
+  if (n === 1) return [defaultFingerForPitch(sortedMidis[0], 'right')]
 
-  // Sort low→high (should already be sorted)
-  const sorted = [...midiNotes].sort((a, b) => a - b)
-
-  // Compute adjacent intervals in semitones
+  // Compute intervals between adjacent notes
   const intervals: number[] = []
   for (let i = 0; i < n - 1; i++) {
-    intervals.push(sorted[i + 1] - sorted[i])
+    intervals.push(sortedMidis[i + 1] - sortedMidis[i])
   }
-  const totalSpan = sorted[n - 1] - sorted[0]
+  const totalSpan = sortedMidis[n - 1] - sortedMidis[0]
 
   if (n === 2) {
-    // 2 notes: 1-2 for small interval, 1-3 for 3rd, 1-4 for 4th, 1-5 for 5th+
     const gap = intervals[0]
     if (gap <= 2) return [1, 2]
     if (gap <= 4) return [1, 3]
@@ -40,32 +275,27 @@ function assignFingers(midiNotes: number[]): number[] {
   }
 
   if (n === 3) {
-    // Triad detection: check if it's a root, 1st inv, or 2nd inv pattern
     const [i1, i2] = intervals
-    // Root position: bottom 3rd (3-4 semitones), top 3rd (3-4) → 1-3-5
+    // Root position triad: 3rd + 3rd → 1-3-5
     if (i1 >= 3 && i1 <= 4 && i2 >= 3 && i2 <= 4) return [1, 3, 5]
-    // 1st inversion: bottom 4th (5 semitones), top 3rd → 1-2-5
+    // 1st inversion: 4th + 3rd → 1-2-5
     if (i1 >= 5 && i1 <= 6 && i2 >= 3 && i2 <= 4) return [1, 2, 5]
-    // 2nd inversion: bottom 3rd, top 4th → 1-3-5
+    // 2nd inversion: 3rd + 4th → 1-3-5
     if (i1 >= 3 && i1 <= 4 && i2 >= 5 && i2 <= 6) return [1, 3, 5]
-    // Wide spread: 1-2-5 for large total span
+    // Wide or close cluster
     if (totalSpan > 7) return [1, 2, 5]
-    // Close cluster: 1-2-3
     if (totalSpan <= 4) return [1, 2, 3]
-    // Default triad
     return [1, 3, 5]
   }
 
   if (n === 4) {
-    // 4-note chords: 1-2-3-5 (dominant 7th style) or 1-2-3-4 (cluster)
-    if (totalSpan >= 7) return [1, 2, 3, 5]
-    if (totalSpan <= 5) return [1, 2, 3, 4]
+    if (totalSpan >= 7) return [1, 2, 3, 5]  // dominant 7th
+    if (totalSpan <= 5) return [1, 2, 3, 4]  // cluster
     return [1, 2, 4, 5]
   }
 
-  // 5+ notes: fill the hand
   if (n === 5) return [1, 2, 3, 4, 5]
-  // More than 5: cap at 5, double some fingers (chord spanning both hands is rare)
+  // > 5 notes: double some fingers
   return Array.from({ length: n }, (_, i) => Math.min(i + 1, 5))
 }
 
@@ -73,7 +303,7 @@ type JotaiStore = ReturnType<typeof getDefaultStore>
 const GOOD_RANGE = 300
 const PERFECT_RANGE = 50
 /** Notes within this time window (seconds) are treated as simultaneous chord. */
-const CHORD_WINDOW = 0.05
+const CHORD_WINDOW = 0.10
 const DEFAULT_BPM = 120
 const DEFAULT_TIME_SIGNATURE = { numerator: 4, denominator: 4 }
 
@@ -158,6 +388,11 @@ export class Player {
   hand = 'both'
   wait = false
   songHands: { left?: number; right?: number } = {}
+
+  /** Pre-computed hand assignment: note index → 'left' | 'right'. Built in setSong(). */
+  handMap: HandMap = new Map()
+  /** Pre-computed finger assignment: note index → 1-5. Built in setSong(). */
+  fingerMap: FingerMap = new Map()
 
   hitNotes: Set<SongNote> = new Set()
   missedNotes: Set<SongNote> = new Set()
@@ -250,6 +485,21 @@ export class Player {
       }
     }
 
+    // Wrong note pressed — strict triggering in wait mode:
+    // un-hit all notes in the current chord so the user must
+    // release and re-press ALL correct notes together.
+    if (this.wait) {
+      const upcoming = this.getUpcomingNotes()
+      for (const n of upcoming) {
+        this.hitNotes.delete(n)
+      }
+      // Also clear lateNotes for these pitches
+      for (const n of upcoming) {
+        const t = this.getTransposedMidi(n.midiNote)
+        this.lateNotes.delete(t)
+      }
+    }
+
     this.store.set(this.score.error, increment)
     this.store.set(this.score.streak, 0)
   }
@@ -295,6 +545,10 @@ export class Player {
     this.resetMetronome()
     this.store.set(this.song, song)
     this.songHands = getHands(songConfig)
+    // Pre-compute hand + finger maps for all notes
+    const maps = computeHandAndFingerMaps(song, this.songHands)
+    this.handMap = maps.handMap
+    this.fingerMap = maps.fingerMap
     this.store.set(this.state, 'CannotPlay')
     this.applyMetronomeConfig(songConfig.metronome)
     this.applyCountdownConfig(songConfig.countdownEnabled)
@@ -350,56 +604,31 @@ export class Player {
     )
   }
 
-  /** Determine which hand a note belongs to based on track assignment.
-   *  Falls back to algorithmic split when MIDI has only one track
-   *  (both hands assigned to same track by parserInferHands). */
+  /** Look up pre-computed hand for a note, falling back to index-based search. */
   getHandForNote(note: SongNote): 'left' | 'right' {
-    const isSingleTrack = this.songHands.left === this.songHands.right
-
-    if (!isSingleTrack) {
-      if (note.track === this.songHands.left) return 'left'
-      if (note.track === this.songHands.right) return 'right'
-      return note.midiNote < 60 ? 'left' : 'right'
-    }
-
-    // Single-track MIDI: algorithmic hand split
-    return this.splitHandByAlgorithm(note)
-  }
-
-  /** Algorithmic hand split for single-track MIDI.
-   *  Groups simultaneous notes and splits at the largest pitch gap or at C4. */
-  private splitHandByAlgorithm(note: SongNote): 'left' | 'right' {
+    // Try to find the note's index for map lookup
     const song = this.getSong()
-    if (!song) return note.midiNote < 60 ? 'left' : 'right'
-
-    // Find all notes at the same time (simultaneous notes / chord)
-    const simultaneous = song.notes.filter(
-      (n) => Math.abs(n.time - note.time) < 0.005,
-    )
-
-    if (simultaneous.length <= 1) {
-      // Single note: use C4 boundary with hysteresis
-      return note.midiNote < 60 ? 'left' : 'right'
-    }
-
-    // Multiple notes at same time: split by largest pitch gap or C4
-    const sorted = simultaneous.map((n) => n.midiNote).sort((a, b) => a - b)
-
-    // Find the largest gap between adjacent notes
-    let maxGap = 0
-    let splitAt = 60 // default to C4
-    for (let i = 0; i < sorted.length - 1; i++) {
-      const gap = sorted[i + 1] - sorted[i]
-      if (gap > maxGap) {
-        maxGap = gap
-        splitAt = sorted[i] + Math.floor(gap / 2)
+    if (song) {
+      // Binary search for the note's index
+      const idx = findNoteIndex(song, note)
+      if (idx >= 0 && this.handMap.has(idx)) {
+        return this.handMap.get(idx)!
       }
     }
+    // Absolute fallback (should rarely hit after pre-computation)
+    return note.midiNote < 60 ? 'left' : 'right'
+  }
 
-    // Only use the gap split if it's significant (> 4 semitones)
-    // Otherwise fall back to C4
-    const threshold = maxGap > 4 ? splitAt : 60
-    return note.midiNote < threshold ? 'left' : 'right'
+  /** Look up pre-computed finger for a note. */
+  getFingerForNote(note: SongNote): number {
+    const song = this.getSong()
+    if (song) {
+      const idx = findNoteIndex(song, note)
+      if (idx >= 0 && this.fingerMap.has(idx)) {
+        return this.fingerMap.get(idx)!
+      }
+    }
+    return 1 // absolute fallback
   }
 
   /** Return hit notes whose MIDI key is still physically pressed.
@@ -471,7 +700,7 @@ export class Player {
       byHand.get(hand)!.push({ midiNote, songNote })
     }
 
-    // Assign fingers per hand: sort by pitch, number 1-5 from low→high
+    // Build result using pre-computed hand + finger maps
     const result: Array<{
       midiNote: number
       hand: 'left' | 'right'
@@ -480,18 +709,14 @@ export class Player {
     }> = []
 
     for (const [hand, notes] of byHand.entries()) {
-      // Sort by pitch (low→high), finger 1 on lowest note
-      notes.sort((a, b) => a.midiNote - b.midiNote)
-
-      const fingers = assignFingers(notes.map((n) => n.midiNote))
-      const prefix = hand === 'right' ? 'R' : 'L'
-
-      for (let i = 0; i < notes.length; i++) {
+      for (const entry of notes) {
+        const finger = this.getFingerForNote(entry.songNote)
+        const prefix = hand === 'right' ? 'R' : 'L'
         result.push({
-          midiNote: notes[i].midiNote,
+          midiNote: entry.midiNote,
           hand,
-          finger: fingers[i],
-          fingerLabel: `${prefix}${fingers[i]}`,
+          finger,
+          fingerLabel: `${prefix}${finger}`,
         })
       }
     }
@@ -654,15 +879,25 @@ export class Player {
   }
 
   playNote(note: SongNote) {
-    this.synths[note.track].playNote(this.getTransposedMidi(note.midiNote), note.velocity)
+    const transposed = this.getTransposedMidi(note.midiNote)
+    this.synths[note.track].playNote(transposed, note.velocity)
+    // Send to MIDI output devices only when loopback is enabled
+    if (this.store.get(loopbackEnabledAtom)) {
+      midi.pressOutput(transposed, this.store.get(this.volume))
+    }
   }
 
   stopNotes(notes: Array<SongNote>) {
     if (notes.length === 0 || this.synths.length === 0) {
       return
     }
+    const loopback = this.store.get(loopbackEnabledAtom)
     for (let note of notes) {
-      this.synths[note.track].stopNote(this.getTransposedMidi(note.midiNote))
+      const transposed = this.getTransposedMidi(note.midiNote)
+      this.synths[note.track].stopNote(transposed)
+      if (loopback) {
+        midi.releaseOutput(transposed)
+      }
     }
   }
 

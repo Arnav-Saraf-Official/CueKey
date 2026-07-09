@@ -5,9 +5,9 @@ import { Check, Gauge, Hourglass, Metronome, Pause, Play, Repeat, SkipBack, Volu
 import { round } from '@/utils'
 import clsx from 'clsx'
 import { useAtomValue } from 'jotai'
-import React from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Button, Menu, MenuItem, MenuTrigger, TooltipTrigger } from 'react-aria-components'
-import { getSpeedPresetOptions } from './speedPresets'
+import { SPEED_PRESETS } from './speedPresets'
 
 type TransportBarProps = {
   isPlaying: boolean
@@ -41,7 +41,32 @@ export default function TransportBar({
   const measure = player.getMeasureForTime(player.getTime())?.number ?? 1
   const isBpmModified = Math.abs(bpmModifier - 1) > 0.001
 
-  const speedOptions = getSpeedPresetOptions(bpmModifier)
+  // Shift-key snap-to-preset for speed slider
+  const [shiftHeld, setShiftHeld] = useState(false)
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => { if (e.key === 'Shift') setShiftHeld(true) }
+    const up = (e: KeyboardEvent) => { if (e.key === 'Shift') setShiftHeld(false) }
+    window.addEventListener('keydown', down)
+    window.addEventListener('keyup', up)
+    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
+  }, [])
+
+  const handleSpeedChange = useCallback(
+    (val: number) => {
+      if (shiftHeld) {
+        let best = SPEED_PRESETS[0]
+        let bestDist = Math.abs(val - best)
+        for (const p of SPEED_PRESETS) {
+          const d = Math.abs(val - p)
+          if (d < bestDist) { bestDist = d; best = p }
+        }
+        player.setBpmModifier(best)
+      } else {
+        player.setBpmModifier(Math.round(val * 100) / 100)
+      }
+    },
+    [player, shiftHeld],
+  )
 
   return (
     <div className="flex h-12 items-center justify-between border-t border-[#23242b] bg-[#141419] px-4 text-gray-200">
@@ -121,39 +146,28 @@ export default function TransportBar({
                     isBpmModified ? 'h-3.5 w-3.5 text-violet-200' : 'h-3.5 w-3.5 text-gray-400'
                   }
                 />
-                {round(bpmModifier * 100)}%
+                {Math.round(bpmModifier * 100)}%
               </Button>
-              <Tooltip>Playback speed</Tooltip>
+              <Tooltip>Playback speed{shiftHeld ? ' · snap' : ''}</Tooltip>
             </TooltipTrigger>
-            <Popover placement="bottom" className="min-w-[96px] p-0.5 text-sm">
-              <Menu
-                className="outline-none"
-                onAction={(key) => {
-                  const option = speedOptions.find((entry) => entry.id === key)
-                  if (!option) {
-                    return
-                  }
-                  player.setBpmModifier(option.value)
-                }}
-              >
-                {speedOptions.map((option) => {
-                  const isSelected = Math.abs(option.value - bpmModifier) < 0.001
-                  return (
-                    <MenuItem
-                      id={option.id}
-                      key={option.id}
-                      className={clsx(
-                        'flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs font-medium text-zinc-200 transition outline-none',
-                        'data-[focused]:bg-zinc-700 data-[pressed]:bg-zinc-700',
-                        isSelected && 'bg-zinc-800 text-white',
-                      )}
-                    >
-                      {option.label}
-                      {isSelected && <Check className="h-3.5 w-3.5 text-white" />}
-                    </MenuItem>
-                  )
-                })}
-              </Menu>
+            <Popover placement="bottom" className="min-w-[160px] rounded-lg border border-white/10 bg-[#1e1e24] p-3 text-sm shadow-xl">
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] font-mono text-gray-500">25%</span>
+                <Slider
+                  orientation="horizontal"
+                  aria-label="Speed"
+                  min={0.25}
+                  max={2}
+                  step={0.01}
+                  value={[bpmModifier]}
+                  onValueChange={([v]) => handleSpeedChange(v)}
+                  className="h-2 flex-1"
+                />
+                <span className="text-[10px] font-mono text-gray-500">200%</span>
+              </div>
+              <div className="mt-1.5 text-center text-[10px] text-gray-500">
+                {Math.round(bpmModifier * 100)}%{shiftHeld ? ' · hold Shift to snap' : ' · hold Shift for presets'}
+              </div>
             </Popover>
           </MenuTrigger>
         </div>
