@@ -83,6 +83,7 @@ export function getDefaultSongSettings(song?: Song): SongConfig {
     noteLabels: 'none',
     coloredNotes: false,
     skipMissedNotes: false,
+    autoPlayOppositeHand: false,
     visualization: 'falling-notes',
     tracks: {},
   }
@@ -169,20 +170,13 @@ function getRange<T>(
 }
 
 function isMatchingHand(item: CanvasItem, state: GivenState) {
-  const { hand, hands } = state
   switch (item.type) {
     case 'measure':
       return state.visualization === 'falling-notes'
     case 'note':
-      const showLeft = hand === 'both' || hand === 'left'
-      if (showLeft && hands[item.track]?.hand === 'left') {
-        return true
-      }
-      const showRight = hand === 'both' || hand === 'right'
-      if (showRight && hands[item.track]?.hand === 'right') {
-        return true
-      }
-      return false
+      // Always render all notes — opacity handles the hand distinction.
+      // Notes from the non-selected hand are dimmed in the renderer.
+      return true
   }
 }
 

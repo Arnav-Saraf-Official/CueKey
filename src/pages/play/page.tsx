@@ -152,7 +152,7 @@ export default function PlaySongPage() {
 
   // Hack for updating player when config changes.
   // Maybe move to the onChange? Or is this chill.
-  const { waiting, left, right } = songConfig
+  const { waiting, left, right, autoPlayOppositeHand } = songConfig
   useEffect(() => {
     player.setWait(waiting)
     if (left && right) {
@@ -160,7 +160,8 @@ export default function PlaySongPage() {
     } else {
       player.setHand(left ? 'left' : 'right')
     }
-  }, [waiting, left, right, player])
+    player.applyAutoPlayOppositeHand(autoPlayOppositeHand, left, right)
+  }, [waiting, left, right, autoPlayOppositeHand, player])
 
   const metronome = songConfig.metronome ?? getDefaultSongSettings(song ?? undefined).metronome
   const loopConfig = songConfig.loop ?? getDefaultSongSettings(song ?? undefined).loop
@@ -212,6 +213,7 @@ export default function PlaySongPage() {
     const config = getSongSettings(id, song)
     setSongConfig(config)
     player.setSong(song, config)
+    player.applyAutoPlayOppositeHand(config.autoPlayOppositeHand, config.left, config.right)
     if (songMeta) {
       recordRecentSong(songMeta)
     }

@@ -413,6 +413,24 @@ export default function SettingsPanel(props: SidebarProps) {
             />
           </SettingRow>
 
+          {handsMode !== 'both' && (
+            <div className="ml-2 border-l border-[#2b2a33] pl-9">
+              <SettingRow
+                title="Auto-play other hand"
+                subtitle="Play opposite hand as backing"
+                titleClassName="text-[11px] font-medium"
+              >
+                <SidebarSwitch
+                  size="sm"
+                  isSelected={props.config.autoPlayOppositeHand}
+                  onChange={(value) =>
+                    props.onChange({ ...props.config, autoPlayOppositeHand: value })
+                  }
+                />
+              </SettingRow>
+            </div>
+          )}
+
           <SettingRow
             icon={<Timer className="h-4 w-4" />}
             title="Countdown"

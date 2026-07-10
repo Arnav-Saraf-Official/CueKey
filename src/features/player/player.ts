@@ -774,6 +774,25 @@ export class Player {
     this.hand = hand
   }
 
+  /** When autoPlayOppositeHand is enabled, ensure the opposite-hand tracks
+   *  are audible so the app plays them as backing while the user practices
+   *  the selected hand. */
+  applyAutoPlayOppositeHand(enabled: boolean, leftSelected: boolean, rightSelected: boolean) {
+    const { left, right } = this.songHands
+    if (left == null || right == null) return
+
+    if (enabled) {
+      // Only one hand selected → opposite hand plays automatically
+      if (leftSelected && !rightSelected) {
+        this.setTrackVolume(right, 1)
+      } else if (rightSelected && !leftSelected) {
+        this.setTrackVolume(left, 1)
+      }
+    }
+    // When disabled or both hands selected, volumes are controlled
+    // by the per-track sound toggle in settings
+  }
+
   getBpmIndexForTime(time: number) {
     const song = this.getSong()
     if (!song) {
