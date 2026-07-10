@@ -25,7 +25,7 @@ const TEXT_FONT = 'monospace'
 const colors = {
   measure: 'rgba(255,255,255,0.06)',
   octaveLine: 'rgba(255,255,255,0.035)',
-  rangeSelectionFill: '#8b5cf6',
+  rangeSelectionFill: '#10b981',
 }
 
 /**

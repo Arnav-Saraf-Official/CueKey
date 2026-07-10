@@ -10,15 +10,13 @@ type NavItem = { route: string; label: string }
 const navItems: NavItem[] = [
   { route: '/songs', label: 'Learn a song' },
   { route: '/freeplay', label: 'Free play' },
-  // TODO: launch phrases.
-  // { route: '/training/phrases', label: 'Training' },
-  { route: '/about', label: 'About' },
+  { route: '/miditools', label: 'MIDI Tools' },
 ]
 
 export default function AppBar() {
   return (
     <div
-      className="relative flex h-[50px] min-h-[50px] flex-col justify-center bg-violet-600 shadow-sm"
+      className="relative flex h-[50px] min-h-[50px] flex-col justify-center bg-emerald-600 shadow-sm"
       style={{
         // This is a hack that accounts for the sometimes present scrollbar.
         // The 100vw includes scrollbar and the 100% does not, so we padLeft the difference.
@@ -42,20 +40,13 @@ export default function AppBar() {
                 to={nav.route}
                 key={nav.label}
                 label={nav.label}
-                activeClassName="bg-violet-700/90 text-white"
+                activeClassName="bg-emerald-700/90 text-white"
               />
             )
           })}
           <div className="ml-auto flex items-center gap-3 pr-8 lg:pr-0">
             <NavIconButton
-              to={'https://www.youtube.com/channel/UCGf2AlCRD3ZCc8ahkqBMtqA'}
-              label="YouTube"
-              title="YouTube"
-            >
-              <Youtube size={20} />
-            </NavIconButton>
-            <NavIconButton
-              to={'https://github.com/sightread/sightread'}
+              to={'https://github.com/arnav-saraf-official/sightread'}
               label="GitHub"
               title="GitHub"
             >
@@ -76,7 +67,7 @@ function SmallWindowNav() {
       <Button aria-label="Open menu" className="inline-flex">
         <Menu height={24} width={24} className="block text-white" />
       </Button>
-      <Popover className="w-[min(90vw,360px)] rounded-2xl border border-white/10 bg-violet-900/95 p-2 shadow-xl backdrop-blur">
+      <Popover className="w-[min(90vw,360px)] rounded-2xl border border-white/10 bg-emerald-900/95 p-2 shadow-xl backdrop-blur">
         <RacMenu className="outline-none">
           {navItems.map((nav) => {
             return (
@@ -130,7 +121,7 @@ function NavItem(
     <Link
       to={props.to}
       className={clsx(
-        'inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-violet-700/90 active:bg-violet-800/90',
+        'inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-emerald-700/90 active:bg-emerald-800/90',
         props.className,
         currentRoute === props.to && (props.activeClassName || 'font-bold'),
       )}
@@ -149,7 +140,7 @@ function NavIconButton(
       aria-label={props.label}
       title={props.title ?? props.label}
       className={clsx(
-        'hover:text-purple-hover flex h-9 w-9 items-center justify-center rounded-md text-white transition-colors hover:bg-violet-700/90 active:bg-violet-800/90',
+        'hover:text-purple-hover flex h-9 w-9 items-center justify-center rounded-md text-white transition-colors hover:bg-emerald-700/90 active:bg-emerald-800/90',
         props.className,
       )}
     >

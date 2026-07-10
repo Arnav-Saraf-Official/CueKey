@@ -51,14 +51,14 @@ export default function SelectSongPage() {
       <Modal show={isUploadFormOpen} onClose={handleCloseAddNew} className="w-[min(100vw,500px)]">
         <ManageFoldersForm onClose={handleCloseAddNew} />
       </Modal>
-      <div className="flex h-screen w-full flex-col overflow-hidden bg-gray-50">
+      <div className="flex h-screen w-full flex-col overflow-hidden bg-[#0f1014]">
         <div className="shrink-0">
           <AppBar />
         </div>
         <div className="mx-auto flex min-h-0 w-full max-w-(--breakpoint-lg) flex-1 flex-col p-6">
-          <h2 className="text-2xl font-semibold text-gray-900">Learn a song</h2>
+          <h2 className="text-2xl font-semibold text-white">Learn a song</h2>
           <Sizer height={4} />
-          <h3 className="text-sm text-gray-600">
+          <h3 className="text-sm text-gray-400">
             Select a song, choose your settings, and begin learning
           </h3>
           <Sizer height={16} />
@@ -69,8 +69,8 @@ export default function SelectSongPage() {
             <button
               className={clsx(
                 'cursor-pointer flex-nowrap whitespace-nowrap',
-                'inline-flex items-center gap-2 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm',
-                'transition-colors hover:bg-gray-50',
+                'inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-gray-200',
+                'transition-colors hover:bg-white/10',
               )}
               onClick={handleAddNew}
             >

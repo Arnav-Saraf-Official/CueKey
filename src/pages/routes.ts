@@ -1,13 +1,10 @@
-import { index, prefix, route, type RouteConfig } from '@react-router/dev/routes'
+import { index, route, type RouteConfig } from '@react-router/dev/routes'
 
 export default [
   index('./home/page.tsx'),
-  route('about', './about/page.tsx'),
-  route('freeplay', './freeplay/page.tsx'),
-  route('play', './play/page.tsx'),
   route('songs', './songs/page.tsx'),
-  ...prefix('training', [
-    route('phrases', './training/phrases/page.tsx'),
-    route('phrases', './training/speed/page.tsx'),
-  ]),
+  route('play', './play/page.tsx'),
+  route('freeplay', './freeplay/page.tsx'),
+  route('miditools', './miditools/page.tsx'),
+  route('miditools/basicpitch', './miditools/basicpitch.tsx'),
 ] satisfies RouteConfig

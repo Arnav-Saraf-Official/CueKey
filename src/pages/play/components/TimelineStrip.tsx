@@ -213,12 +213,12 @@ export default function TimelineStrip({
         {isLooping && rangeSelection && (
           <div
             ref={rangeRef}
-            className="absolute top-1 bottom-1 rounded-sm border border-violet-400/40 bg-violet-500/15"
+            className="absolute top-1 bottom-1 rounded-sm border border-emerald-400/40 bg-emerald-500/15"
           >
             <div
               className={clsx(
-                'absolute top-0 bottom-0 -left-1.5 flex w-3 items-center justify-center rounded-l bg-violet-500/90 shadow-md',
-                'cursor-w-resize transition-colors hover:bg-violet-400',
+                'absolute top-0 bottom-0 -left-1.5 flex w-3 items-center justify-center rounded-l bg-emerald-500/90 shadow-md',
+                'cursor-w-resize transition-colors hover:bg-emerald-400',
               )}
               style={{ minWidth: MIN_HANDLE_WIDTH }}
               data-timeline-handle="true"
@@ -234,8 +234,8 @@ export default function TimelineStrip({
             </div>
             <div
               className={clsx(
-                'absolute top-0 -right-1.5 bottom-0 flex w-3 items-center justify-center rounded-r bg-violet-500/90 shadow-md',
-                'cursor-e-resize transition-colors hover:bg-violet-400',
+                'absolute top-0 -right-1.5 bottom-0 flex w-3 items-center justify-center rounded-r bg-emerald-500/90 shadow-md',
+                'cursor-e-resize transition-colors hover:bg-emerald-400',
               )}
               style={{ minWidth: MIN_HANDLE_WIDTH }}
               data-timeline-handle="true"
@@ -253,7 +253,7 @@ export default function TimelineStrip({
         )}
         <div
           ref={playheadRef}
-          className="absolute top-0 bottom-0 left-0 w-[2px] bg-white shadow-[0_0_10px_rgba(139,92,246,0.6)]"
+          className="absolute top-0 bottom-0 left-0 w-[2px] bg-white shadow-[0_0_10px_rgba(16,185,129,0.6)]"
         >
           <div className="absolute -top-1 left-1/2 h-3 w-4 -translate-x-1/2 bg-white [clip-path:polygon(0_0,100%_0,50%_100%)]" />
         </div>

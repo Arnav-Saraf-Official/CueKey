@@ -3,6 +3,7 @@ import { useSong } from '@/features/data'
 import { useSongMetadata } from '@/features/data/library'
 import midiState from '@/features/midi'
 import { requiresPermissionAtom, scanFolders } from '@/features/persist/persistence'
+import { recordRecentSong } from '@/features/persist/recentSongs'
 import { usePlayer } from '@/features/player'
 import {
   getDefaultSongSettings,
@@ -211,7 +212,10 @@ export default function PlaySongPage() {
     const config = getSongSettings(id, song)
     setSongConfig(config)
     player.setSong(song, config)
-  }, [song, setSongConfig, id, player])
+    if (songMeta) {
+      recordRecentSong(songMeta)
+    }
+  }, [song, setSongConfig, id, player, songMeta])
 
   function showToast(msg: string) {
     const newKey = Date.now().toString()

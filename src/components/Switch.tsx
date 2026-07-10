@@ -15,7 +15,7 @@ const track = tv({
   variants: {
     isSelected: {
       false: 'bg-gray-400 group-pressed:bg-gray-500',
-      true: 'bg-violet-600 group-pressed:bg-violet-700',
+      true: 'bg-emerald-600 group-pressed:bg-emerald-700',
     },
     isDisabled: {
       true: 'bg-gray-200',

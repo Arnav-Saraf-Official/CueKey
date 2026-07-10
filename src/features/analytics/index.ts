@@ -1,7 +1,3 @@
-if (import.meta.env.PROD && !import.meta.env.VITE_PUBLIC_GA_ID) {
-  throw new Error('Missing VITE_PUBLIC_GA_ID')
-}
-
 export const GA_TRACKING_ID = import.meta.env.VITE_PUBLIC_GA_ID ?? ''
 
 // https://developers.google.com/analytics/devguides/collection/gtagjs/pages

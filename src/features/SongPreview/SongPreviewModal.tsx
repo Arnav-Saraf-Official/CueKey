@@ -64,7 +64,7 @@ export default function SongPreviewModal({
       className="overflow-hidden rounded-2xl bg-transparent p-0"
       modalClassName="max-w-[1100px] w-[min(96vw,1100px)]"
     >
-      <div className="flex h-[min(90vh,700px)] w-full bg-white text-left">
+      <div className="flex h-[min(90vh,700px)] w-full bg-[#1a1820] text-left">
         <div
           className="relative flex-1 overflow-hidden bg-[#21242b]"
           onClick={() => player.toggle()}
@@ -81,22 +81,22 @@ export default function SongPreviewModal({
           )}
           {id && source && <SongPreview songId={id} source={source} />}
         </div>
-        <div className="flex w-[420px] flex-col border-l border-gray-200 bg-white">
+        <div className="flex w-[420px] flex-col border-l border-white/10 bg-[#1a1820]">
           <div className="px-6 pt-6 pb-3">
             <Heading
-              className="truncate text-xl leading-tight font-semibold text-gray-900"
+              className="truncate text-xl leading-tight font-semibold text-white"
               title={title}
             >
               {title}
             </Heading>
-            <Text className="mt-2 text-sm font-medium text-gray-500">MIDI Preview</Text>
+            <Text className="mt-2 text-sm font-medium text-gray-400">MIDI Preview</Text>
           </div>
           <div className="px-6 pb-6">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <div className="rounded-lg border border-white/10 bg-white/5 p-3">
               <div className="grid grid-cols-[auto_1fr_1fr] grid-rows-[8px_auto_auto] items-center gap-x-3">
                 <div className="col-span-3 row-start-1" />
                 <Button
-                  className="col-start-1 row-start-2 flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200/60 hover:text-violet-600"
+                  className="col-start-1 row-start-2 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-white/10 hover:text-emerald-400"
                   onPress={() => player.toggle()}
                   aria-label={playerState.playing ? 'Pause preview' : 'Play preview'}
                 >
@@ -107,7 +107,7 @@ export default function SongPreviewModal({
                   )}
                 </Button>
                 <div className="col-span-2 col-start-2 row-start-2 flex h-8 items-center">
-                  <SongScrubBar height={8} className="w-full" trackClassName="bg-gray-200" />
+                  <SongScrubBar height={8} className="w-full" trackClassName="bg-white/10" />
                 </div>
                 <div className="col-span-2 col-start-2 row-start-3 flex items-center justify-between font-mono text-[10px] text-gray-500">
                   <span>{currentTime}</span>
@@ -118,30 +118,30 @@ export default function SongPreviewModal({
           </div>
           <div className="flex-1 overflow-y-auto px-6">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="inline-flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 shadow-sm">
-                <Text className="text-[10px] font-semibold tracking-wider text-gray-400 uppercase">
+              <div className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-1.5">
+                <Text className="text-[10px] font-semibold tracking-wider text-gray-500 uppercase">
                   Tracks
                 </Text>
-                <Text className="text-sm font-semibold text-gray-900">{trackCountLabel}</Text>
+                <Text className="text-sm font-semibold text-gray-200">{trackCountLabel}</Text>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 shadow-sm">
-                <Text className="text-[10px] font-semibold tracking-wider text-gray-400 uppercase">
+              <div className="inline-flex items-center gap-2 rounded-md border border-white/10 bg-white/5 px-3 py-1.5">
+                <Text className="text-[10px] font-semibold tracking-wider text-gray-500 uppercase">
                   Total Notes
                 </Text>
-                <Text className="text-sm font-semibold text-gray-900">{noteCountLabel}</Text>
+                <Text className="text-sm font-semibold text-gray-200">{noteCountLabel}</Text>
               </div>
             </div>
           </div>
-          <div className="mt-auto border-t border-gray-100 px-6 py-6">
+          <div className="mt-auto border-t border-white/10 px-6 py-6">
             <Button
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-violet-500 active:bg-violet-700"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-4 text-lg font-semibold text-white shadow-lg transition hover:bg-emerald-500 active:bg-emerald-700"
               onPress={() => navigate({ pathname: '/play', search: `?${playSongSearch}` })}
             >
               Play Now
             </Button>
-            <div className="mt-3 text-center text-xs text-gray-400">
+            <div className="mt-3 text-center text-xs text-gray-500">
               Press{' '}
-              <kbd className="rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 font-mono text-gray-500">
+              <kbd className="rounded border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-gray-400">
                 Enter
               </kbd>{' '}
               to start
