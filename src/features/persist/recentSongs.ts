@@ -3,7 +3,7 @@ import { atom, getDefaultStore } from 'jotai'
 import { isBrowser } from '@/utils'
 
 const STORAGE_KEY = 'RECENT_SONGS'
-const MAX_RECENT = 10
+const MAX_RECENT = 6
 
 const store = getDefaultStore()
 
@@ -19,7 +19,14 @@ function load(): RecentSong[] {
   if (!isBrowser()) return []
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as RecentSong[]) : []
+    const parsed: RecentSong[] = raw ? JSON.parse(raw) : []
+    // Truncate in case the cap was lowered since last write
+    if (parsed.length > MAX_RECENT) {
+      const trimmed = parsed.slice(0, MAX_RECENT)
+      save(trimmed)
+      return trimmed
+    }
+    return parsed
   } catch {
     return []
   }
