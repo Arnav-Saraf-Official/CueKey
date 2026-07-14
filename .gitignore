@@ -24,3 +24,5 @@ tsconfig.tsbuildinfo
 
 # electron
 dist-electron
+
+*.mid

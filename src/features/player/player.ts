@@ -6,6 +6,7 @@ import { clamp, getHands, round } from '@/utils'
 import { atom, Atom, getDefaultStore, PrimitiveAtom } from 'jotai'
 import midi, { loopbackEnabledAtom } from '../midi'
 import { getSynth, Synth } from '../synth'
+import { computeFingering } from '../fingering'
 
 function increment(x: number) {
   return x + 1
@@ -545,10 +546,10 @@ export class Player {
     this.resetMetronome()
     this.store.set(this.song, song)
     this.songHands = getHands(songConfig)
-    // Pre-compute hand + finger maps for all notes
-    const maps = computeHandAndFingerMaps(song, this.songHands)
-    this.handMap = maps.handMap
-    this.fingerMap = maps.fingerMap
+    // Pre-compute hand + finger maps using global optimization engine
+    const result = computeFingering(song, this.songHands)
+    this.handMap = result.handMap
+    this.fingerMap = result.fingerMap
     this.store.set(this.state, 'CannotPlay')
     this.applyMetronomeConfig(songConfig.metronome)
     this.applyCountdownConfig(songConfig.countdownEnabled)

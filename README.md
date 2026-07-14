@@ -16,3 +16,5 @@ Thank you for supporting the project and helping shape what comes next.
 - The code and feature set in this snapshot will remain **free forever**.
 - Pull requests are disabled. New development is happening in a private repository.
 - We intend to open-source the core again in the future, and ideally as much of the full app as possible.
+
+There was a 4, 5, crossover, those should basically never happen. Additionally, there was another scenario where the fingering was set to be a crossover from finger 2 to finger 1, but on a black key. That should never happen, other than very very rare cases. Using 1 on black keys should have a negative weighting, and also based on the time till next note, the algorithm should take that into account so it can decide if it wants to use the same finger twice. However, that also has to be pretty justified
