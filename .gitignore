@@ -26,3 +26,6 @@ tsconfig.tsbuildinfo
 dist-electron
 
 *.mid
+
+.agents/
+.claude/

@@ -19,7 +19,7 @@ export function MarketingFooter() {
       </h2>
       <MaxWidthWrapper className="mx-auto w-full py-4">
         <div className="text-muted-foreground text-center text-xs sm:text-left">
-          © 2025 Sightread Studio, LLC. All rights reserved.
+          © 2025 CueKey Studio, LLC. All rights reserved.
         </div>
       </MaxWidthWrapper>
     </footer>

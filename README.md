@@ -1,12 +1,12 @@
-# [sightread](http://sightread.dev)
+# [CueKey](http://cuekey.dev)
 
-A free and open-source webapp for learning to play Piano. Play music without needing to learn sheet music. Plug in your MIDI keyboard for the optimal experience. See full details on the [website](https://sightread.dev/about).
+A free and open-source webapp for learning to play Piano. Play music without needing to learn sheet music. Plug in your MIDI keyboard for the optimal experience. See full details on the [website](https://cuekey.dev/about).
 
 <img alt="app screenshot" src="./public/images/mode_sheet_hero_readme.png" style="max-width: 100%"/>
 
 ## Project Status Update (March 2026)
 
-Effective March 4, 2026, Sightread is transitioning to a **private development phase** while we iterate faster on product and sustainability. We are actively thinking about which parts of the project can stay open long-term, and will open source as much as possible in 2027.
+Effective March 4, 2026, CueKey is transitioning to a **private development phase** while we iterate faster on product and sustainability. We are actively thinking about which parts of the project can stay open long-term, and will open source as much as possible in 2027.
 
 Thank you for supporting the project and helping shape what comes next.
 

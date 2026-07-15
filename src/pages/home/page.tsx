@@ -13,7 +13,7 @@ export default function Home() {
 
   return (
     <>
-      <title>Sightread</title>
+      <title>CueKey</title>
       <div className="flex min-h-screen flex-col bg-[#0f1014] text-white">
         <AppBar />
         <div className="flex flex-1 items-center justify-center px-6">
@@ -22,7 +22,7 @@ export default function Home() {
             <div className="flex flex-col items-center gap-6 pt-12 text-center md:items-start md:pt-0 md:text-left">
               <div className="flex items-center gap-3">
                 <Logo height={40} width={40} />
-                <h1 className="text-5xl font-extralight tracking-tight">SIGHTREAD</h1>
+                <h1 className="text-5xl font-extralight tracking-tight">CUEKEY</h1>
               </div>
               <p className="max-w-sm text-base text-gray-400">
                 Plug in your keyboard and learn piano, right in your browser.

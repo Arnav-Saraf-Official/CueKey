@@ -1,6 +1,6 @@
 {
-  "name": "Sightread",
-  "short_name": "sightread",
+  "name": "CueKey",
+  "short_name": "cuekey",
   "description": "app for learning piano",
   "start_url": "/",
   "display": "browser",  

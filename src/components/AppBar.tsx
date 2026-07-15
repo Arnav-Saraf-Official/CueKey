@@ -31,7 +31,7 @@ export default function AppBar() {
         <Link to={'/'} className="hover:text-purple-hover flex items-baseline text-white">
           <Logo height={24} width={24} className="relative top-[3px]" />
           <Sizer width={8} />
-          <span className="text-2xl font-extralight"> SIGHTREAD</span>
+          <span className="text-2xl font-extralight"> CUEKEY</span>
         </Link>
         <div className="hidden grow justify-evenly gap-6 pl-16 align-baseline whitespace-nowrap md:flex">
           {navItems.map((nav) => {
@@ -46,7 +46,7 @@ export default function AppBar() {
           })}
           <div className="ml-auto flex items-center gap-3 pr-8 lg:pr-0">
             <NavIconButton
-              to={'https://github.com/arnav-saraf-official/sightread'}
+              to={'https://github.com/arnav-saraf-official/cuekey'}
               label="GitHub"
               title="GitHub"
             >
@@ -85,7 +85,7 @@ function SmallWindowNav() {
           })}
           <Separator className="mx-2 my-1 border-t border-white/10" />
           <MenuItem
-            href="https://github.com/sightread/sightread"
+            href="https://github.com/cuekey/cuekey"
             target="_blank"
             className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-white/80 transition outline-none data-[focused]:bg-white/15 data-[pressed]:bg-white/10"
             aria-label="GitHub"

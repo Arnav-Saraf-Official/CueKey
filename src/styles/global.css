@@ -4,10 +4,10 @@
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 :root {
-  --sightread-font-family:
+  --cuekey-font-family:
     system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
     'Noto Color Emoji';
-  font-family: var(--sightread-font-family);
+  font-family: var(--cuekey-font-family);
 }
 
 @theme {
@@ -61,7 +61,7 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
-  --font-sans: var(--sightread-font-family);
+  --font-sans: var(--cuekey-font-family);
 }
 
 /*

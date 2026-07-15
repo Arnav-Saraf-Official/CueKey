@@ -10,29 +10,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        <title>Sightread</title>
+        <title>CueKey</title>
         <meta name="author" content="Jake Fried" />
         <meta name="description" content="app for learning piano" />
 
         {/* Open Graph */}
-        <meta property="og:title" content="Sightread" />
-        <meta property="og:site_name" content="Sightread" />
+        <meta property="og:title" content="CueKey" />
+        <meta property="og:site_name" content="CueKey" />
         <meta property="og:description" content="app for learning piano" />
         <meta property="og:image" content="/images/mode_falling_notes_screenshot.png" />
         <meta
           property="og:image:alt"
-          content="Sightread demo displaying falling notes visualization"
+          content="CueKey demo displaying falling notes visualization"
         />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta
           name="twitter:image"
-          content="https://sightread.dev/images/mode_falling_notes_screenshot.png"
+          content="https://cuekey.dev/images/mode_falling_notes_screenshot.png"
         />
         <meta
           name="twitter:image:alt"
-          content="Sightread demo displaying falling notes visualization"
+          content="CueKey demo displaying falling notes visualization"
         />
 
         {/* Favicons */}
