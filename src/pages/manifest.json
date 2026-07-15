@@ -3,7 +3,7 @@
   "short_name": "sightread",
   "description": "app for learning piano",
   "start_url": "/",
-  "display": "standalone",
+  "display": "browser",  
   "icons": [
     {
       "src": "/icon-192.png",
