@@ -79,7 +79,7 @@ export default function TransportBar({
           <SkipBack className="h-5 w-5" />
         </Button>
         <Button
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-600 text-white shadow-[0_0_12px_rgba(139,92,246,0.35)] transition hover:bg-violet-500 active:scale-95"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white shadow-[0_0_12px_rgba(16,185,129,0.35)] transition hover:bg-emerald-500 active:scale-95"
           onPress={onTogglePlaying}
           onMouseDown={(event) => event.preventDefault()}
         >
@@ -112,7 +112,7 @@ export default function TransportBar({
             <span className="text-sm font-semibold text-white select-none">{currentTime}</span>
             <span className="text-[11px] text-gray-500 select-none">/ {duration}</span>
           </div>
-          <span className="text-[10px] font-semibold tracking-wider text-violet-400 uppercase select-none">
+          <span className="text-[10px] font-semibold tracking-wider text-emerald-400 uppercase select-none">
             Measure {measure}
           </span>
         </div>
@@ -137,13 +137,13 @@ export default function TransportBar({
                 className={clsx(
                   'flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs font-medium transition',
                   isBpmModified
-                    ? 'border-violet-500/30 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20'
+                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20'
                     : 'border-transparent bg-[#1e2028] text-gray-300 hover:bg-[#232633]',
                 )}
               >
                 <Gauge
                   className={
-                    isBpmModified ? 'h-3.5 w-3.5 text-violet-200' : 'h-3.5 w-3.5 text-gray-400'
+                    isBpmModified ? 'h-3.5 w-3.5 text-emerald-200' : 'h-3.5 w-3.5 text-gray-400'
                   }
                 />
                 {Math.round(bpmModifier * 100)}%
@@ -201,7 +201,7 @@ function TogglePill({
   onPress,
   showStateText = true,
 }: TogglePillProps) {
-  const iconClasses = isActive ? 'h-3.5 w-3.5 text-violet-200' : 'h-3.5 w-3.5 text-gray-400'
+  const iconClasses = isActive ? 'h-3.5 w-3.5 text-emerald-200' : 'h-3.5 w-3.5 text-gray-400'
   const styledIcon = React.cloneElement(icon, { className: iconClasses })
   const showContent = content !== undefined || showStateText
   return (
@@ -209,7 +209,7 @@ function TogglePill({
       <Button
         className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-medium transition ${
           isActive
-            ? 'border border-violet-500/30 bg-violet-500/10 text-violet-200 hover:bg-violet-500/20'
+            ? 'border border-emerald-500/30 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20'
             : 'border border-transparent bg-[#1e2028] text-gray-300 hover:bg-[#232633]'
         }`}
         onPress={onPress}

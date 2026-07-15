@@ -1,8 +1,9 @@
 {
-  "name": "@sightread/app",
+  "name": "sightread",
   "version": "0.8.1",
   "private": true,
   "type": "module",
+  "main": "electron/main.cjs",
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "4.7.0",
     "@react-router/dev": "7.11.0",
@@ -17,6 +18,8 @@
     "@types/react-dom": "19.2.3",
     "@types/resize-observer-browser": "0.1.11",
     "@types/wicg-file-system-access": "2023.10.7",
+    "electron": "^43.1.0",
+    "electron-builder": "^26.15.3",
     "eslint": "9.39.2",
     "fluent-ffmpeg": "2.1.3",
     "jsdom": "27.4.0",
@@ -38,6 +41,7 @@
     "@radix-ui/react-tooltip": "1.2.8",
     "@react-router/node": "7.11.0",
     "@react-router/serve": "7.11.0",
+    "@spotify/basic-pitch": "^1.0.1",
     "@tonejs/midi": "2.0.28",
     "clsx": "2.1.1",
     "idb-keyval": "6.2.2",
@@ -59,6 +63,8 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "preview": "vite preview --port 8080",
+    "electron:dev": "react-router dev & sleep 2 && electron .",
+    "electron:build": "react-router build && electron-builder",
     "check-types": "react-router typegen && tsc",
     "check-fmt": "prettier --check '**/*.{ts,tsx}'",
     "fmt": "prettier --write '**/*.{ts,tsx}'",
@@ -80,5 +86,29 @@
   },
   "trustedDependencies": [
     "skia-canvas"
-  ]
+  ],
+  "build": {
+    "appId": "dev.sightread.app",
+    "productName": "Sightread",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "build/client/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon-512.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "public/icon-512.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "public/icon-512.png"
+    }
+  }
 }

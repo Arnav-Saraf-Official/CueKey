@@ -25,7 +25,7 @@ const TEXT_FONT = 'monospace'
 const colors = {
   measure: 'rgba(255,255,255,0.06)',
   octaveLine: 'rgba(255,255,255,0.035)',
-  rangeSelectionFill: '#8b5cf6',
+  rangeSelectionFill: '#10b981',
 }
 
 /**
@@ -282,7 +282,14 @@ export function renderFallingNote(note: SongNote, state: State): void {
   const minLengthToDisplayLetter = getFontSize(ctx, '', (width * 2) / 3).height + 15
   const length = Math.floor(Math.max(actualLength, minLengthToDisplayLetter))
 
+  // Reduce opacity for notes belonging to the non-selected hand
+  const noteHand = state.hands[note.track]?.hand ?? 'both'
+  const isOppositeHand = state.hand !== 'both' && noteHand !== state.hand && noteHand !== 'none'
+
   ctx.save()
+  if (isOppositeHand) {
+    ctx.globalAlpha = 0.35
+  }
   ctx.fillStyle = color
   ctx.strokeStyle = 'rgb(40,40,40)'
   roundRect(ctx, posX, posY, width, length)

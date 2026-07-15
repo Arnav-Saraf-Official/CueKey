@@ -22,7 +22,7 @@ export default function CountdownOverlay({ total, remaining }: CountdownOverlayP
               key={index}
               className={clsx(
                 'h-2.5 w-2.5 rounded-full transition',
-                isActive ? 'bg-violet-300 shadow-[0_0_10px_rgba(196,181,253,0.6)]' : 'bg-white/20',
+                isActive ? 'bg-emerald-300 shadow-[0_0_10px_rgba(110,231,183,0.6)]' : 'bg-white/20',
               )}
             />
           )

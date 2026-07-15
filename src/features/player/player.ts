@@ -6,6 +6,7 @@ import { clamp, getHands, round } from '@/utils'
 import { atom, Atom, getDefaultStore, PrimitiveAtom } from 'jotai'
 import midi, { loopbackEnabledAtom } from '../midi'
 import { getSynth, Synth } from '../synth'
+import { computeFingering } from '../fingering'
 
 function increment(x: number) {
   return x + 1
@@ -545,10 +546,10 @@ export class Player {
     this.resetMetronome()
     this.store.set(this.song, song)
     this.songHands = getHands(songConfig)
-    // Pre-compute hand + finger maps for all notes
-    const maps = computeHandAndFingerMaps(song, this.songHands)
-    this.handMap = maps.handMap
-    this.fingerMap = maps.fingerMap
+    // Pre-compute hand + finger maps using global optimization engine
+    const result = computeFingering(song, this.songHands)
+    this.handMap = result.handMap
+    this.fingerMap = result.fingerMap
     this.store.set(this.state, 'CannotPlay')
     this.applyMetronomeConfig(songConfig.metronome)
     this.applyCountdownConfig(songConfig.countdownEnabled)
@@ -772,6 +773,25 @@ export class Player {
 
   setHand(hand: any) {
     this.hand = hand
+  }
+
+  /** When autoPlayOppositeHand is enabled, ensure the opposite-hand tracks
+   *  are audible so the app plays them as backing while the user practices
+   *  the selected hand. */
+  applyAutoPlayOppositeHand(enabled: boolean, leftSelected: boolean, rightSelected: boolean) {
+    const { left, right } = this.songHands
+    if (left == null || right == null) return
+
+    if (enabled) {
+      // Only one hand selected → opposite hand plays automatically
+      if (leftSelected && !rightSelected) {
+        this.setTrackVolume(right, 1)
+      } else if (rightSelected && !leftSelected) {
+        this.setTrackVolume(left, 1)
+      }
+    }
+    // When disabled or both hands selected, volumes are controlled
+    // by the per-track sound toggle in settings
   }
 
   getBpmIndexForTime(time: number) {

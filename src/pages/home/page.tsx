@@ -1,128 +1,101 @@
-import { AppBar, MarketingFooter, Sizer } from '@/components'
-import React from 'react'
+import { AppBar, Sizer } from '@/components'
+import { recentSongsAtom } from '@/features/persist/recentSongs'
+import { useSongMetadata } from '@/features/data/library'
+import { Logo } from '@/icons'
+import { formatTime } from '@/utils'
+import clsx from 'clsx'
+import { useAtomValue } from 'jotai'
+import { Clock, Music } from 'lucide-react'
 import { Link } from 'react-router'
-import { FeaturedSongsPreview } from './FeaturedSongsPreview'
 
 export default function Home() {
+  const recentSongs = useAtomValue(recentSongsAtom)
+
   return (
     <>
-      <div className="bg-background relative flex min-h-screen w-full flex-col text-white">
+      <title>Sightread</title>
+      <div className="flex min-h-screen flex-col bg-[#0f1014] text-white">
         <AppBar />
-        <div className="bg-violet-600">
-          <div className="mx-auto w-full max-w-(--breakpoint-lg) px-6 py-10">
-            <div className="grid items-center gap-8 md:grid-cols-[1.1fr_0.9fr]">
-              <div className="flex flex-col gap-4 text-center md:text-left">
-                <h1 className="text-responsive-xxl font-bold">Your Piano Journey Begins Here</h1>
-                <h3 className="text-responsive-xl text-white/85">
-                  Plug in your keyboard and learn, right in your browser
-                </h3>
-                <div className="flex flex-wrap justify-center gap-3 md:justify-start">
-                  <Link to={'/songs'}>
-                    <Button className="bg-white text-gray-900 shadow-sm hover:bg-violet-100 active:bg-violet-200 active:shadow-inner">
-                      Learn a song
-                    </Button>
-                  </Link>
-                  <Link to={'/freeplay'}>
-                    <Button className="border border-white/50 text-white hover:bg-white/10">
-                      Free play
-                    </Button>
-                  </Link>
-                </div>
+        <div className="flex flex-1 items-center justify-center px-6">
+          <div className="flex w-full max-w-4xl flex-col gap-10 md:flex-row md:items-start md:gap-16">
+            {/* Hero section */}
+            <div className="flex flex-col items-center gap-6 pt-12 text-center md:items-start md:pt-0 md:text-left">
+              <div className="flex items-center gap-3">
+                <Logo height={40} width={40} />
+                <h1 className="text-5xl font-extralight tracking-tight">SIGHTREAD</h1>
               </div>
-              <div className="flex justify-center md:justify-end">
-                <div className="w-full rounded-2xl shadow-[0_18px_40px_rgba(17,24,39,0.35)]">
-                  <FeaturedSongsPreview className="w-full" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-background">
-          <div className="mx-auto w-full max-w-(--breakpoint-lg) px-6 py-16">
-            <h3 className="text-lg font-semibold text-gray-900">Why Sightread</h3>
-            <p className="mt-2 text-sm text-gray-600">A few reasons to give it a try.</p>
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
-              <div
-                className="glint-card rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
-                onMouseMove={(event) => {
-                  const rect = event.currentTarget.getBoundingClientRect()
-                  const x = event.clientX - rect.left
-                  const y = event.clientY - rect.top
-                  event.currentTarget.style.setProperty('--glint-x', `${x}px`)
-                  event.currentTarget.style.setProperty('--glint-y', `${y}px`)
-                }}
-              >
-                <h3 className="text-base font-semibold text-gray-900">Your Own Music</h3>
-                <p className="mt-2 text-sm text-gray-600">
-                  Works with any MIDI file. We'll automatically detect which track is for which
-                  hand.
-                </p>
-              </div>
-              <div
-                className="glint-card rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
-                onMouseMove={(event) => {
-                  const rect = event.currentTarget.getBoundingClientRect()
-                  const x = event.clientX - rect.left
-                  const y = event.clientY - rect.top
-                  event.currentTarget.style.setProperty('--glint-x', `${x}px`)
-                  event.currentTarget.style.setProperty('--glint-y', `${y}px`)
-                }}
-              >
-                <h3 className="text-base font-semibold text-gray-900">Learn at Your Own Pace</h3>
-                <p className="mt-2 text-sm text-gray-600">
-                  Tempo controls and Wait Mode let you slow down and focus on accuracy.
-                </p>
-              </div>
-              <div
-                className="glint-card rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
-                onMouseMove={(event) => {
-                  const rect = event.currentTarget.getBoundingClientRect()
-                  const x = event.clientX - rect.left
-                  const y = event.clientY - rect.top
-                  event.currentTarget.style.setProperty('--glint-x', `${x}px`)
-                  event.currentTarget.style.setProperty('--glint-y', `${y}px`)
-                }}
-              >
-                <h3 className="text-base font-semibold text-gray-900">Multiple Modes</h3>
-                <p className="mt-2 text-sm text-gray-600">
-                  Falling Notes or Sheet Hero. Switch views to match how you learn.
-                </p>
+              <p className="max-w-sm text-base text-gray-400">
+                Plug in your keyboard and learn piano, right in your browser.
+              </p>
+              <div className="flex gap-3">
+                <Link
+                  to="/songs"
+                  className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-500 active:bg-emerald-700"
+                >
+                  Learn to play
+                </Link>
+                <Link
+                  to="/freeplay"
+                  className="rounded-lg border border-white/15 px-5 py-2.5 text-sm font-medium text-gray-200 transition hover:border-white/30 hover:bg-white/5"
+                >
+                  Free play
+                </Link>
               </div>
             </div>
+
+            {/* Recent songs panel */}
+            <div className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] p-5">
+              <div className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-300">
+                <Clock className="h-4 w-4 text-gray-500" />
+                Recently played
+              </div>
+              {recentSongs.length === 0 ? (
+                <div className="flex flex-col items-center gap-2 py-8 text-center text-gray-500">
+                  <Music className="h-8 w-8" />
+                  <p className="text-sm">No songs played yet.</p>
+                  <p className="text-xs">Pick a song to get started.</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-0.5">
+                  {recentSongs.map((song) => (
+                    <RecentSongRow key={`${song.source}/${song.id}`} song={song} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-        <div className="mt-auto">
-          <MarketingFooter />
         </div>
       </div>
     </>
   )
 }
 
-function Button({
-  children,
-  style,
-  className,
-}: {
-  children?: React.ReactNode
-  style?: React.CSSProperties
-  className?: string
-}) {
+function RecentSongRow({ song }: { song: { id: string; source: string; title: string; duration: number; playedAt: number } }) {
+  const meta = useSongMetadata(song.id, song.source as any)
+  const title = meta?.title ?? song.title
+
   return (
-    <button
-      className={className}
-      style={{
-        transition: 'background-color 150ms',
-        cursor: 'pointer',
-        fontSize: 'clamp(0.875rem, 0.875rem + 0.35vw, 1.05rem)',
-        padding: '8px 16px',
-        borderRadius: 10,
-        fontWeight: 500,
-        minWidth: 'max-content',
-        ...style,
-      }}
+    <Link
+      to={`/play?source=${encodeURIComponent(song.source)}&id=${encodeURIComponent(song.id)}`}
+      className={clsx(
+        'flex items-center justify-between rounded-md px-3 py-2 transition',
+        'hover:bg-white/5',
+      )}
     >
-      {children}
-    </button>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-gray-200">{title}</p>
+        <p className="text-xs text-gray-500">
+          {formatTime(song.duration)} · {relativeTime(song.playedAt)}
+        </p>
+      </div>
+    </Link>
   )
+}
+
+function relativeTime(timestamp: number): string {
+  const secs = Math.floor((Date.now() - timestamp) / 1000)
+  if (secs < 60) return 'just now'
+  if (secs < 3600) return `${Math.floor(secs / 60)}m ago`
+  if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`
+  return `${Math.floor(secs / 86400)}d ago`
 }

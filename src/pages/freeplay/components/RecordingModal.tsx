@@ -131,7 +131,7 @@ export default function SongPreviewModal({
               <div className="grid grid-cols-[auto_1fr_1fr] grid-rows-[8px_auto_auto] items-center gap-x-3">
                 <div className="col-span-3 row-start-1" />
                 <Button
-                  className="col-start-1 row-start-2 flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200/60 hover:text-violet-600"
+                  className="col-start-1 row-start-2 flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition hover:bg-gray-200/60 hover:text-emerald-600"
                   onPress={() => player.toggle()}
                   aria-label={playerState.playing ? 'Pause preview' : 'Play preview'}
                 >
@@ -170,7 +170,7 @@ export default function SongPreviewModal({
           <div className="mt-auto border-t border-gray-100 px-6 py-6">
             <div className="flex w-full gap-3">
               <Button
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-violet-300 bg-white text-sm font-semibold text-violet-700 transition hover:bg-violet-50 active:bg-violet-100"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-emerald-300 bg-white text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50 active:bg-emerald-100"
                 onPress={() => {
                   const origin = window.location.origin
                   const url = `${origin}/play/?source=base64&id=${encodeURIComponent(id)}`
@@ -181,7 +181,7 @@ export default function SongPreviewModal({
                 Copy Share URL
               </Button>
               <Button
-                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-violet-600 text-sm font-semibold text-white shadow-md transition hover:bg-violet-500 active:bg-violet-700"
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 text-sm font-semibold text-white shadow-md transition hover:bg-emerald-500 active:bg-emerald-700"
                 onPress={() => downloadBase64Midi(id)}
               >
                 <Download />

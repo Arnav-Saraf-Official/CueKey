@@ -1,9 +1,9 @@
 export const palette = {
-  purple: {
-    light: '#EEE5FF',
-    hover: '#b99af4',
-    primary: '#8147EB',
-    dark: '#611AE5',
+  mint: {
+    light: '#D1FAE5',
+    hover: '#6EE7B7',
+    primary: '#10B981',
+    dark: '#059669',
   },
   orange: {
     light: '#DC7E52',

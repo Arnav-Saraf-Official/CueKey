@@ -247,6 +247,13 @@ function renderLedgerLines(state: State, note: SongNote): void {
 function renderSheetNote(state: State, note: SongNote): void {
   const { ctx, pps, keySignature } = state
   ctx.save()
+
+  // Reduce opacity for non-selected hand notes
+  const noteHand = state.hands?.[note.track]?.hand ?? 'both'
+  if (state.hand !== 'both' && noteHand !== state.hand && noteHand !== 'none') {
+    ctx.globalAlpha = 0.35
+  }
+
   const length = Math.round(pps * note.duration)
   const posX = getItemStartEnd(state, note).start
   const color = sheetNoteColor(posX, length)

@@ -51,7 +51,7 @@ export default function Table({ rows, search, onSelectRow }: SongsTableProps) {
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-white/10 bg-white/[0.03]"
       style={{
         ['--sort-icon-gap' as any]: '1.5rem',
         fontVariantNumeric: 'tabular-nums',
@@ -69,12 +69,12 @@ export default function Table({ rows, search, onSelectRow }: SongsTableProps) {
             })
           }
         >
-          <TableHeader className="table w-full table-fixed bg-gray-50">
+          <TableHeader className="table w-full table-fixed bg-white/5 outline-hidden">
             <Column
               id="title"
               isRowHeader
               allowsSorting
-              className="border-b border-gray-200 px-4 py-2 text-left text-sm font-semibold tracking-wider text-gray-500 uppercase"
+              className="cursor-pointer border-b border-white/10 px-4 py-2 text-left text-sm font-semibold tracking-wider text-gray-400 uppercase outline-hidden"
             >
               {({ sortDirection }) => (
                 <div className="relative flex items-center">
@@ -92,7 +92,7 @@ export default function Table({ rows, search, onSelectRow }: SongsTableProps) {
             <Column
               id="duration"
               allowsSorting
-              className="w-30 border-b border-gray-200 px-4 py-2 text-right text-sm font-semibold tracking-wider text-gray-500 uppercase"
+              className="w-30 cursor-pointer border-b border-white/10 px-4 py-2 text-right text-sm font-semibold tracking-wider text-gray-400 uppercase outline-hidden"
             >
               {({ sortDirection }) => (
                 <div className="relative flex items-center justify-end">
@@ -111,19 +111,19 @@ export default function Table({ rows, search, onSelectRow }: SongsTableProps) {
           <TableBody
             className="block flex-1 overflow-y-auto"
             items={sorted}
-            renderEmptyState={() => <div className="p-5 text-2xl">No results</div>}
+            renderEmptyState={() => <div className="p-5 text-2xl text-gray-500">No results</div>}
           >
             {(item) => (
               <Row
                 id={item.id}
-                className="table w-full table-fixed cursor-pointer text-gray-900 hover:bg-violet-50"
+                className="table w-full table-fixed cursor-pointer text-gray-200 outline-hidden hover:bg-white/5 focus-visible:bg-white/5 focus-visible:outline-hidden"
                 onAction={() => onSelectRow(item.id)}
               >
-                <Cell className="border-b border-gray-200 px-4 py-2">
-                  <span className="block truncate whitespace-nowrap">{item.title}</span>
+                <Cell className="truncate border-b border-white/5 px-4 py-2 text-gray-200 outline-hidden">
+                  {item.title}
                 </Cell>
                 <Cell
-                  className="border-b border-gray-200 px-4 py-2 text-right text-gray-500"
+                  className="border-b border-white/5 px-4 py-2 text-right text-gray-400 outline-hidden"
                   style={{ paddingRight: 'calc(1rem + var(--sort-icon-gap))' }}
                 >
                   {formatTime(Number(item.duration))}
@@ -133,7 +133,7 @@ export default function Table({ rows, search, onSelectRow }: SongsTableProps) {
           </TableBody>
         </RacTable>
       </div>
-      <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-2 text-xs text-gray-500">
+      <div className="flex items-center justify-between border-t border-white/10 bg-white/5 px-4 py-2 text-xs text-gray-500">
         <span>Showing {sorted.length} songs</span>
       </div>
     </div>
@@ -143,14 +143,14 @@ export default function Table({ rows, search, onSelectRow }: SongsTableProps) {
 export function TableSkeleton() {
   const rows = Array.from({ length: 8 })
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-white/10 bg-white/[0.03]">
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="table w-full table-fixed bg-gray-50">
+        <div className="table w-full table-fixed bg-white/5">
           <div className="table-row">
-            <div className="table-cell border-b border-gray-200 px-4 py-2 text-sm font-semibold tracking-wider text-gray-500 uppercase">
+            <div className="table-cell border-b border-white/10 px-4 py-2 text-sm font-semibold tracking-wider text-gray-400 uppercase">
               Title
             </div>
-            <div className="table-cell border-b border-gray-200 px-4 py-2 text-right text-sm font-semibold tracking-wider text-gray-500 uppercase">
+            <div className="table-cell border-b border-white/10 px-4 py-2 text-right text-sm font-semibold tracking-wider text-gray-400 uppercase">
               Length
             </div>
           </div>
@@ -159,19 +159,19 @@ export function TableSkeleton() {
           {rows.map((_, index) => (
             <div key={index} className="table w-full table-fixed">
               <div className="table-row" style={{ height: '36.5px' }}>
-                <div className="table-cell border-b border-gray-200 px-4 py-2 align-middle">
-                  <div className="shimmer h-4 w-[65%] rounded bg-gray-200" />
+                <div className="table-cell border-b border-white/5 px-4 py-2 align-middle">
+                  <div className="shimmer h-4 w-[65%] rounded bg-white/10" />
                 </div>
-                <div className="table-cell border-b border-gray-200 px-4 py-2 text-right align-middle">
-                  <div className="shimmer ml-auto h-4 w-12 rounded bg-gray-200" />
+                <div className="table-cell border-b border-white/5 px-4 py-2 text-right align-middle">
+                  <div className="shimmer ml-auto h-4 w-12 rounded bg-white/10" />
                 </div>
               </div>
             </div>
           ))}
         </div>
       </div>
-      <div className="flex items-center justify-between border-t border-gray-200 bg-gray-50 px-4 py-2 text-xs text-gray-500">
-        <span className="shimmer h-3 w-24 rounded bg-gray-200" />
+      <div className="flex items-center justify-between border-t border-white/10 bg-white/5 px-4 py-2 text-xs text-gray-500">
+        <span className="shimmer h-3 w-24 rounded bg-white/10" />
       </div>
     </div>
   )

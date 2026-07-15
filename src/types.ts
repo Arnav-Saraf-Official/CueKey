@@ -107,6 +107,7 @@ export type SongConfig = {
   noteLabels: NOTE_LABELS
   coloredNotes: boolean
   skipMissedNotes: boolean
+  autoPlayOppositeHand: boolean
   keySignature?: KEY_SIGNATURE
   tracks: {
     [trackId: number]: TrackSetting

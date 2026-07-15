@@ -278,7 +278,7 @@ export default function SettingsPanel(props: SidebarProps) {
         </button>
       </div>
       <div className="flex-1 overflow-y-auto pt-0">
-        <Section title="Playback" icon={<AudioWaveform className="h-4 w-4 text-violet-300" />}>
+        <Section title="Playback" icon={<AudioWaveform className="h-4 w-4 text-emerald-300" />}>
           <SettingRow
             icon={<Gauge className="h-4 w-4" />}
             title="Speed"
@@ -413,6 +413,24 @@ export default function SettingsPanel(props: SidebarProps) {
             />
           </SettingRow>
 
+          {handsMode !== 'both' && (
+            <div className="ml-2 border-l border-[#2b2a33] pl-9">
+              <SettingRow
+                title="Auto-play other hand"
+                subtitle="Play opposite hand as backing"
+                titleClassName="text-[11px] font-medium"
+              >
+                <SidebarSwitch
+                  size="sm"
+                  isSelected={props.config.autoPlayOppositeHand}
+                  onChange={(value) =>
+                    props.onChange({ ...props.config, autoPlayOppositeHand: value })
+                  }
+                />
+              </SettingRow>
+            </div>
+          )}
+
           <SettingRow
             icon={<Timer className="h-4 w-4" />}
             title="Countdown"
@@ -449,7 +467,7 @@ export default function SettingsPanel(props: SidebarProps) {
           </SettingRow>
         </Section>
 
-        <Section title="Display" icon={<SlidersHorizontal className="h-4 w-4 text-violet-300" />}>
+        <Section title="Display" icon={<SlidersHorizontal className="h-4 w-4 text-emerald-300" />}>
           <SettingRow icon={<Monitor className="h-4 w-4" />} title="Visualizer">
             <Select
               aria-label="Visualizer"
@@ -507,7 +525,7 @@ export default function SettingsPanel(props: SidebarProps) {
 
         <Section
           title="Tracks"
-          icon={<ListMusic className="h-4 w-4 text-violet-300" />}
+          icon={<ListMusic className="h-4 w-4 text-emerald-300" />}
           badge={
             <span className="rounded-full border border-[#322e3b] bg-[#262030] px-2 py-0.5 text-[10px] text-gray-500">
               {trackCount}
@@ -530,13 +548,13 @@ export default function SettingsPanel(props: SidebarProps) {
                   >
                     <div className="mb-3 flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="flex size-5 items-center justify-center rounded-full bg-[#8b5cf6]/15 text-[10px] font-bold text-[#8b5cf6]">
+                        <span className="flex size-5 items-center justify-center rounded-full bg-[#10b981]/15 text-[10px] font-bold text-[#10b981]">
                           {index + 1}
                         </span>
                         <span className="text-sm font-medium text-white">Track {index + 1}</span>
                         <button
                           type="button"
-                          className="ml-1 flex items-center justify-center text-gray-500 hover:text-[#8b5cf6]"
+                          className="ml-1 flex items-center justify-center text-gray-500 hover:text-[#10b981]"
                           title="Sample Sound"
                           onClick={() => handlePlayTrackChange(entry.id)}
                         >
@@ -691,7 +709,7 @@ function SidebarSwitch({ isSelected, onChange, size = 'md' }: SidebarSwitchProps
           className={clsx(
             'relative inline-flex items-center rounded-full border border-transparent transition',
             trackClass,
-            isSelected ? 'bg-violet-500' : 'bg-[#322e3b]',
+            isSelected ? 'bg-emerald-500' : 'bg-[#322e3b]',
           )}
         >
           <span
@@ -734,7 +752,7 @@ function SegmentedToggle({ value, options, onChange, className }: SegmentedToggl
       )}
     >
       <div
-        className="absolute inset-y-0 left-0 rounded-md bg-violet-600 transition-transform duration-200"
+        className="absolute inset-y-0 left-0 rounded-md bg-emerald-600 transition-transform duration-200"
         style={{
           width: indicatorWidth,
           transform: `translateX(${activeIndex * 100}%)`,
